@@ -1,0 +1,70 @@
+---
+// Importamos los componentes de estructura visual
+import Layout from "../layouts/Layout.astro";
+import Container from "../components/container.astro";
+import SectionHead from "../components/sectionhead.astro";
+
+// Importamos la tarjeta de noticia
+import CardNews from "../components/ui/card_news.astro";
+
+// Importamos el cliente GraphQL
+import { fetchGraphQL } from "../api";
+
+// 1. DEFINIMOS LA QUERY DE GRAPHQL
+const GET_ALL_NEWS_QUERY = `
+  query GetAllNewsPage {
+    getAllNews {
+      new_id
+      title
+      short_descr
+      sections
+      creation_date
+      publication_date
+      public
+      author
+      slug
+      image {
+        src
+        alt
+      }
+    }
+  }
+`;
+
+// 2. OBTENEMOS LOS DATOS
+const data = await fetchGraphQL<any>(GET_ALL_NEWS_QUERY);
+const allNews = data?.getAllNews || [];
+
+// 3. PROCESAMOS LOS DATOS
+// Filtramos las que ya están publicadas (opcional) y las ordenamos de más nueva a más antigua
+const publishedNews = allNews
+  .filter((news: any) => new Date(news.publication_date) <= new Date() ); //&& news.public);
+---
+
+<Layout title="Totes les Notícies">
+  <Container>
+    <SectionHead align="center">
+      <Fragment slot="title">Notícies</Fragment>
+      <Fragment slot="desc">
+        Estigues al dia de les últimes novetats, esdeveniments i comunicats de la nostra associació.
+      </Fragment>
+    </SectionHead>
+
+    <main class="mt-16 pb-24">
+      {publishedNews.length > 0 ? (
+        <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 w-full">
+          {publishedNews.map((newsEntry: any) => (
+            <CardNews newsEntry={newsEntry} />
+          ))}
+        </ul>
+      ) : (
+        <div class="text-center py-20 bg-gray-50 rounded-md border border-gray-100">
+          <h3 class="text-xl font-medium text-gray-500">
+            Encara no hi ha cap notícia publicada.
+          </h3>
+          <p class="text-gray-400 mt-2">Torna-ho a comprovar més endavant.</p>
+        </div>
+      )}
+    </main>
+  </Container>
+</Layout>

@@ -1,0 +1,8 @@
+type Image {
+  src: String!
+  alt: String!
+}
+
+type Query {
+  _empty: String
+}

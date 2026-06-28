@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// prisma/schema.prisma
+
+model News {
+  new_id           Int      @id @default(autoincrement())
+  title            String
+  short_descr      String
+  sections         String[] // PostgreSQL soporta arrays nativamente
+  creation_date    DateTime @default(now())
+  publication_date DateTime
+  public           Boolean  @default(false)
+  author           String
+  
+  // Aplanamos el objeto image
+  image_src        String
+  image_alt        String
+  
+  slug             String   @unique
+}
+
+model Activity {
+  activity_id            Int      @id @default(autoincrement())
+  title                  String
+  short_descr            String
+  sections               String[]
+  creation_date          DateTime @default(now())
+  publication_date       DateTime
+  activity_date          DateTime
+  begin_inscription_date DateTime
+  end_inscription_date   DateTime
+  public                 Boolean  @default(false)
+  
+  // Aplanamos el objeto image
+  image_src              String
+  image_alt              String
+  
+  slug                   String   @unique
+}
+
+model User {
+  id                  Int       @id @default(autoincrement()) 
+  first_name          String    
+  last_name_1         String    
+  last_name_2         String?   
+  dni                 String    @unique 
+  phone               String?   
+  email               String    @unique
+  password            String    
+  birth_date          DateTime  
+  join_date           DateTime  @default(now()) 
+  leave_date          DateTime? 
+  fee_status          String    @default("UP_TO_DATE")
+  roles               String[]  
+  sections            String[]  
+}

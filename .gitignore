@@ -1,0 +1,9 @@
+# 1. Ignorar todos los archivos y carpetas en este directorio
+/*
+
+# 2. Excluir de la ignorancia (es decir, INCLUIR) las carpetas que quieres
+!/astro/
+!/node_js_2/
+
+# 3. Incluir también este mismo archivo .gitignore
+!.gitignore

@@ -1,0 +1,190 @@
+---
+import Button from "./ui/button.astro";
+---
+
+<form id="profile-form" class="max-w-md mx-auto">
+  
+  <div id="loading-message" class="text-center text-blue-500 font-medium mb-4">
+    Carregant dades del perfil...
+  </div>
+
+  <div id="form-content" class="hidden">
+    <div class="mb-5">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+      <input
+        type="text"
+        placeholder="Nom"
+        required
+        class="w-full px-4 py-3 border-2 placeholder:text-gray-800 rounded-md outline-none focus:ring-4 border-gray-300 focus:border-gray-600 ring-gray-100"
+        name="nom"
+      />
+    </div>
+
+    <div class="mb-5">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Primer Cognom</label>
+      <input
+        type="text"
+        placeholder="Primer Cognom"
+        required
+        class="w-full px-4 py-3 border-2 placeholder:text-gray-800 rounded-md outline-none focus:ring-4 border-gray-300 focus:border-gray-600 ring-gray-100"
+        name="cognom1"
+      />
+    </div>
+
+    <div class="mb-5">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Segon Cognom</label>
+      <input
+        type="text"
+        placeholder="Segon Cognom"
+        class="w-full px-4 py-3 border-2 placeholder:text-gray-800 rounded-md outline-none focus:ring-4 border-gray-300 focus:border-gray-600 ring-gray-100"
+        name="cognom2"
+      />
+    </div>
+
+    <div class="mb-5">
+      <label class="block text-sm font-medium text-gray-700 mb-1">DNI / NIE</label>
+      <input
+        type="text"
+        placeholder="DNI / NIE"
+        required
+        disabled
+        class="w-full px-4 py-3 border-2 bg-gray-100 text-gray-500 rounded-md outline-none cursor-not-allowed border-gray-300"
+        name="dni"
+        title="El DNI no es pot modificar"
+      />
+    </div>
+
+    <div class="mb-5">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Telèfon</label>
+      <input
+        type="tel"
+        placeholder="Telèfon"
+        class="w-full px-4 py-3 border-2 placeholder:text-gray-800 rounded-md outline-none focus:ring-4 border-gray-300 focus:border-gray-600 ring-gray-100"
+        name="telefon"
+      />
+    </div>
+
+    <div class="mb-5">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Correu electrònic</label>
+      <input
+        type="email"
+        placeholder="Correu electrònic"
+        required
+        disabled
+        class="w-full px-4 py-3 border-2 bg-gray-100 text-gray-500 rounded-md outline-none cursor-not-allowed border-gray-300"
+        name="email"
+        title="L'email no es pot modificar"
+      />
+    </div>
+
+    <div class="mb-5">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Data de naixement</label>
+      <input
+        type="date"
+        placeholder="Data de naixement"
+        required
+        class="w-full px-4 py-3 border-2 text-gray-800 placeholder:text-gray-800 rounded-md outline-none focus:ring-4 border-gray-300 focus:border-gray-600 ring-gray-100"
+        name="data_naixement"
+      />
+    </div>
+
+    <div class="flex items-center justify-center mb-5 mt-8">
+      <Button type="submit" size="lg">Desar Canvis</Button>
+    </div>
+
+    <div id="profile-result" class="text-center font-medium mt-3 hidden"></div>
+  </div>
+</form>
+
+<script is:inline>
+  const profileForm = document.getElementById("profile-form");
+  const loadingMessage = document.getElementById("loading-message");
+  const formContent = document.getElementById("form-content");
+  const profileResult = document.getElementById("profile-result");
+
+  const GRAPHQL_URL = "http://localhost:4000/graphql";
+
+  async function loadUserData() {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
+
+    const graphqlQuery = {
+      query: `
+        query {
+          me {
+            first_name
+            last_name_1
+            last_name_2
+            dni
+            phone
+            email
+            birth_date
+          }
+        }
+      `
+    };
+
+    try {
+      const response = await fetch(GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` 
+        },
+        body: JSON.stringify(graphqlQuery),
+      });
+
+      const resBody = await response.json();
+      
+      // CHIVATO: Esto imprimirá en la consola de tu navegador lo que llega del servidor
+      console.log("Dades rebudes de GraphQL:", resBody);
+
+      if (resBody.errors) {
+        throw new Error(resBody.errors[0].message);
+      }
+
+      const user = resBody.data.me;
+
+      if (user) {
+        document.querySelector('input[name="nom"]').value = user.first_name || '';
+        document.querySelector('input[name="cognom1"]').value = user.last_name_1 || '';
+        document.querySelector('input[name="cognom2"]').value = user.last_name_2 || '';
+        document.querySelector('input[name="dni"]').value = user.dni || '';
+        document.querySelector('input[name="telefon"]').value = user.phone || '';
+        document.querySelector('input[name="email"]').value = user.email || '';
+        
+        // REPARACIÓN FECHA: Comprobamos el formato antes de procesarlo
+        if (user.birth_date) {
+          try {
+            // Si es un número (ej: 1577836800000), lo tratamos como número. Si es texto, como texto.
+            const isNumeric = !isNaN(user.birth_date) && !isNaN(parseFloat(user.birth_date));
+            const dateObj = isNumeric ? new Date(Number(user.birth_date)) : new Date(user.birth_date);
+            
+            document.querySelector('input[name="data_naixement"]').value = dateObj.toISOString().split('T')[0];
+          } catch (dateError) {
+            console.error("No s'ha pogut formatar la data:", dateError);
+          }
+        }
+
+        loadingMessage.style.display = 'none';
+        formContent.classList.remove('hidden');
+        formContent.classList.add('block');
+      } else {
+         throw new Error("L'usuari no s'ha trobat a la base de dades.");
+      }
+    } catch (error) {
+      console.error("Error capturat:", error);
+      loadingMessage.classList.replace("text-blue-500", "text-red-500");
+      // Mostramos el error exacto en pantalla para saber qué falla
+      loadingMessage.innerHTML = "Error: " + error.message; 
+    }
+  }
+
+  // Cargar datos inmediatamente
+  loadUserData();
+  document.addEventListener("astro:after-swap", loadUserData);
+</script>

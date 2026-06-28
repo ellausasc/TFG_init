@@ -1,0 +1,31 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Container from "../components/container.astro";
+import Sectionhead from "../components/sectionhead.astro";
+import LoginForm from "../components/login_form.astro";
+---
+
+<Layout title="Iniciar sessió">
+  <Container>
+    <Sectionhead>
+      <Fragment slot="title">Iniciar sessió</Fragment>
+      <Fragment slot="desc">
+        Accedeix al teu compte per gestionar les teves activitats i
+        inscripcions.
+      </Fragment>
+    </Sectionhead>
+  </Container>
+  <Container class="pt-16">
+    <LoginForm />
+  </Container>
+</Layout>
+
+<script is:inline>
+  // Medida de seguridad: Si alguien intenta acceder a esta página sin haber
+  // iniciado sesión (sin token), lo redirigimos automáticamente al login.
+  if (typeof localStorage !== "undefined") {
+    if (localStorage.getItem("token")) {
+      window.location.href = "/me";
+    }
+  }
+</script>
