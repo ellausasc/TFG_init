@@ -1,0 +1,74 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import Container from "../../../components/container.astro";
+import Sectionhead from "../../../components/sectionhead.astro";
+import Button from "../../../components/ui/button.astro";
+import NewsFields from "../../../components/forms/news_fields.astro";
+---
+
+<Layout title="Crear Notícia">
+  <Container>
+    <Sectionhead>
+      <Fragment slot="title">Crear nova notícia</Fragment>
+      <Fragment slot="desc">Afegeix una nova publicació al portal.</Fragment>
+    </Sectionhead>
+  </Container>
+  
+  <Container class="pt-16 pb-24">
+    <form id="news-form" class="max-w-3xl mx-auto" novalidate>
+      <NewsFields />
+      
+      <div class="mt-8 text-center">
+        <Button type="submit" size="lg">Crear Notícia</Button>
+      </div>
+      <div id="news-result" class="font-medium mt-4 hidden text-center"></div>
+    </form>
+  </Container>
+</Layout>
+
+<script>
+  import { createNews } from "../../../services/newsService";
+
+  const form = document.getElementById("news-form") as HTMLFormElement;
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const shortDescInput = document.getElementById("newsShort") as HTMLInputElement;
+    const longDescInput = document.getElementById("newsLong") as HTMLInputElement;
+
+    const input = {
+      title: formData.get("title"),
+      shortDescription: shortDescInput?.value || "",
+      longDescription: longDescInput?.value || "",
+      sectionId: parseInt(formData.get("sectionId") as string),
+      publishedAt: new Date(formData.get("publishedAt") as string).toISOString(),
+      status: formData.get("isPublic") === "on" ? "PUBLISHED" : "DRAFT",
+      tagIds: (formData.get("tagIds") as string)
+        .split(',')
+        .map(id => parseInt(id.trim()))
+        .filter(id => !isNaN(id)),
+    };
+
+    const result = document.getElementById("news-result");
+    const token = localStorage.getItem("token") || "";
+
+    try {
+      result!.innerText = "Creant notícia...";
+      result!.className = "font-medium mt-4 text-blue-600 block text-center";
+      await createNews(input, token);
+      result!.innerText = "Notícia creada correctament!";
+      result!.className = "font-medium mt-4 text-green-600 block text-center";
+      form.reset();
+    } catch (err: any) {
+      result!.innerText = "Error: " + err.message;
+      result!.className = "font-medium mt-4 text-red-600 block text-center";
+    }
+  });
+</script>
+
+<script is:inline>
+  if (typeof localStorage !== "undefined" && !localStorage.getItem("token")) {
+    window.location.href = "/login";
+  }
+</script>

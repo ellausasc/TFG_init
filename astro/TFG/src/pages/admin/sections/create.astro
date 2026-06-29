@@ -1,0 +1,98 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import Container from "../../../components/container.astro";
+import Sectionhead from "../../../components/sectionhead.astro";
+import Button from "../../../components/ui/button.astro";
+import SectionFields from "../../../components/forms/section_fields.astro";
+import NewsFields from "../../../components/forms/news_fields.astro";
+---
+
+<Layout title="Crear Secció">
+  <Container>
+    <Sectionhead>
+      <Fragment slot="title">Crear nova secció</Fragment>
+      <Fragment slot="desc">
+        Crea una nova secció al portal amb la seva notícia principal.
+      </Fragment>
+    </Sectionhead>
+  </Container>
+  
+  <Container class="pb-24 mt-8">
+    <form id="master-form" class="max-w-3xl mx-auto" novalidate>
+      
+      <h2 class="text-xl font-bold mb-6 text-gray-800 border-b pb-2">Informació de la Secció</h2>
+      <SectionFields />
+      
+      <h2 class="text-xl font-bold mb-6 text-gray-800 border-b pb-2">Informació de la pàgina principal</h2>
+
+      <NewsFields 
+        showTitle={false} 
+        showSection={false} 
+        showDate={false} 
+        showTags={false} 
+        showIsPublic={false}
+      />
+      
+      <div class="mt-8 text-center">
+        <Button type="submit" size="lg">Crear Secció</Button>
+      </div>
+      
+      <div id="result" class="font-medium mt-4 hidden text-center"></div>
+    </form>
+  </Container>
+</Layout>
+
+<script>
+  import { createSection } from "../../../services/sectionsService";
+
+  const form = document.getElementById("master-form") as HTMLFormElement;
+  
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    
+    // Recuperem els valors dels editors Tiptap pels IDs únics definits a NewsFields
+    const shortDesc = document.getElementById("newsShort") as HTMLInputElement;
+    const longDesc = document.getElementById("newsLong") as HTMLInputElement;
+
+    // Construcció de l'input segons l'esquema GraphQL
+    const input = {
+      name: formData.get("name"),
+      description: formData.get("description"),
+      isActive: formData.get("isActive") === "on",
+      publishedAt: new Date().toISOString(),
+      mainNews: {
+        // Com que hem amagat el títol, usem el nom de la secció com a títol
+        title: formData.get("name"),
+        shortDescription: shortDesc?.value || "",
+        longDescription: longDesc?.value || "",
+        status: "PUBLISHED",
+        type: "SECTION"
+      }
+    };
+
+    const result = document.getElementById("result");
+    const token = localStorage.getItem("token") || "";
+
+    try {
+      result!.innerText = "Creant secció";
+      result!.className = "font-medium mt-4 text-blue-600 block text-center";
+      
+      await createSection(input, token);
+      
+      result!.innerText = "Tot creat correctament!";
+      result!.className = "font-medium mt-4 text-green-600 block text-center";
+      form.reset();
+    } catch (err: any) {
+      result!.innerText = "Error: " + err.message;
+      result!.className = "font-medium mt-4 text-red-600 block text-center";
+    }
+  });
+</script>
+
+<script is:inline>
+  // Seguretat: si no hi ha token, redirigeix al login
+  if (typeof localStorage !== "undefined" && !localStorage.getItem("token")) {
+    window.location.href = "/login";
+  }
+</script>

@@ -26,8 +26,6 @@ const { items: publishedNews } = await getNews({
   filter,
 });
 
-console.log("Filtros recibidos:", { title, sectionId });
-
 // Helper para construir URLs manteniendo filtros actuales
 const getPaginationUrl = (newPage: number) => {
   const params = new URLSearchParams(Astro.url.searchParams);
@@ -56,8 +54,8 @@ const getPaginationUrl = (newPage: number) => {
             ))}
           </ul>
         ) : (
-          <div class="text-center py-20 bg-gray-50 rounded-md border border-gray-100">
-            <h3 class="text-xl font-medium text-gray-500">
+          <div class="text-center py-20 rounded-md">
+            <h3 class="text-xl font-medium ">
               No s'han trobat notícies amb aquests filtres.
             </h3>
             <p class="text-gray-400 mt-2">Prova a canviar els criteris de cerca.</p>

@@ -1,40 +1,42 @@
 ---
-// news/[slug].astro (Versión optimizada y segura)
+// src/pages/news/[slug].astro
 export const prerender = false;
+
 import Layout from "../../layouts/Layout.astro";
 import Container from "../../components/container.astro";
 import { getNewsBySlug } from "../../services/newsService";
 
 const { slug } = Astro.params;
 
-if (!slug) {
-  return Astro.redirect('/404');
-}
+if (!slug) return Astro.redirect('/404');
 
 const news = await getNewsBySlug(slug);
 
-if (!news) {
-  return Astro.redirect('/404');
-}
+if (!news) return Astro.redirect('/404');
 
-// 1. Manejo seguro de fechas
-const displayDate = news.publishedAt 
-  ? new Date(news.publishedAt).toLocaleDateString("ca-ES") 
-  : "Data no disponible";
-
-// 2. Manejo seguro de autor
-const authorFullName = news.author 
-  ? `${news.author.firstName} ${news.author.lastName1}` 
-  : "Anònim";
-
-// 3. Manejo seguro de fecha para el atributo datetime
-const isoDate = news.publishedAt ? new Date(news.publishedAt).toISOString() : "";
+// Lògica de dates
+const rawDate = news.publishedAt;
+let dateObj = rawDate ? (typeof rawDate === 'string' && /^\d+$/.test(rawDate) ? new Date(Number(rawDate)) : new Date(rawDate)) : null;
+const isValidDate = dateObj && !isNaN(dateObj.getTime());
+const displayDate = isValidDate ? dateObj.toLocaleDateString("ca-ES") : "Data no disponible";
+const isoDate = isValidDate ? dateObj.toISOString() : "";
+const authorFullName = news.author ? `${news.author.firstName} ${news.author.lastName1}` : "Anònim";
 ---
 
 <Layout title={news.title}>
   <Container>
-    <div class="mx-auto max-w-3xl mt-14">
-      <!-- Verificamos si existe sección antes de renderizar -->
+    
+    {/* IMATGE PRINCIPAL - Alineada a la izquierda */}
+    {news.mainImage && (
+      <img 
+        src={news.mainImage} 
+        alt={news.title} 
+        class="w-full h-80 object-contain rounded-xl mt-8" 
+      />
+    )}
+
+    {/* Contenedor de texto - Sin mx-auto para que quede a la izquierda */}
+    <div class="max-w-3xl mt-14">
       {news.section && (
         <span class="text-blue-400 uppercase tracking-wider text-sm font-medium">
           {news.section.name}
@@ -45,20 +47,15 @@ const isoDate = news.publishedAt ? new Date(news.publishedAt).toISOString() : ""
         {news.title}
       </h1>
       
-      <div class="flex gap-2 mt-3 items-center flex-wrap md:flex-nowrap">
-        <span class="text-gray-400">
-          {authorFullName}
-        </span>
+      <div class="flex gap-2 mt-3 items-center flex-wrap md:flex-nowrap justify-start">
+        <span class="text-gray-400">{authorFullName}</span>
         <span class="text-gray-400">•</span>
-        <time class="text-gray-400" datetime={isoDate}>
-          {displayDate}
-        </time>
+        <time class="text-gray-400" datetime={isoDate}>{displayDate}</time>
         
-        <!-- Renderizado de tags con comprobación de existencia -->
         {news.tags && news.tags.length > 0 && (
           <>
             <span class="text-gray-400 hidden md:block">•</span>
-            <div class="w-full md:w-auto flex flex-wrap gap-3">
+            <div class="flex flex-wrap gap-3">
               {news.tags.map((tag: any) => (
                 <span class="text-sm text-gray-500">#{tag.description}</span>
               ))}
@@ -68,20 +65,17 @@ const isoDate = news.publishedAt ? new Date(news.publishedAt).toISOString() : ""
       </div>
     </div>
 
-    <div class="mx-auto prose prose-lg mt-6 max-w-3xl">
-      <!-- shortDescription renderizado como HTML -->
+    {/* Contenido - Sin mx-auto */}
+    <div class="prose prose-lg mt-6 max-w-3xl">
       <div class="text-justify font-semibold text-gray-700" set:html={news.shortDescription}></div>
-      
-      <!-- longDescription como texto simple (o HTML si tu base de datos guarda formato) -->
-      <div class="text-justify mt-4 whitespace-pre-line">
-        {news.longDescription}
-      </div>
+      <div class="text-justify mt-4 whitespace-pre-line" set:html={news.longDescription}></div>
     </div>
     
-    <div class="text-center mt-8">
+    {/* Botón de volver - Centrado (text-center) */}
+    <div class="text-center mt-12 mb-8">
       <a
         href="javascript:history.back()"
-        class="bg-gray-100 px-5 py-3 rounded-md hover:bg-gray-200 transition"
+        class="bg-gray-100 px-5 py-3 rounded-md hover:bg-gray-200 transition inline-block"
         >← Back</a
       >
     </div>

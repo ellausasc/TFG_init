@@ -10,6 +10,7 @@ const GET_NEWS_BY_SLUG = `
       shortDescription
       longDescription
       slug
+      publishedAt
       mainImage
       author {
         firstName
@@ -45,6 +46,15 @@ const GET_NEWS_FILTERED_QUERY = `
         }
       }
       totalCount
+    }
+  }
+`;
+
+const CREATE_NEWS_MUTATION = `
+  mutation CreateNews($input: CreateNewsInput!) {
+    createNews(input: $input) {
+      slug
+      title
     }
   }
 `;
@@ -94,4 +104,27 @@ export async function getNews(params: {
     items, 
     totalCount: result.totalCount 
   };
+}
+
+export async function createNews(input: any, token: string) {
+  // Nota: Asegúrate de que esta URL sea correcta según tu entorno
+  const response = await fetch("http://localhost:4000/graphql", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      query: CREATE_NEWS_MUTATION,
+      variables: { input }
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.errors && result.errors.length > 0) {
+    throw new Error(result.errors[0].message);
+  }
+
+  return result.data.createNews;
 }

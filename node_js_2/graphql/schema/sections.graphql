@@ -29,7 +29,7 @@ input CreateSectionMainNewsInput {
   title: String!
   shortDescription: String!
   longDescription: String!
-  status: Boolean
+  status: String
   type: String
   mainImage: String
   secondaryImage: String
