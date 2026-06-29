@@ -6,21 +6,19 @@ import Container from "../components/container.astro";
 import SectionHead from "../components/sectionhead.astro";
 import Zcontact from "../components/zcontact.astro";
 
-// Importem els teus nous components!
 import CardNews from "../components/ui/card_news.astro";
 import CardActivity from "../components/ui/card_activity.astro";
 
-import { fetchGraphQL, HOME_DATA_QUERY } from "../api";
+import { getHomeData } from "../services/homeService";
 
-const { getAllNews, getAllActivities } = await fetchGraphQL<any>(HOME_DATA_QUERY);
+// Obtenemos los datos del nuevo esquema
+const { getNewsFiltered, getAllActivities } = await getHomeData();
 
- const top5NewsEntries = getAllNews
-  .filter((n: any) => new Date(n.publication_date) < new Date() && n.public)
-//  .sort((a: any, b: any) => new Date(b.publication_date).getTime() - new Date(a.publication_date).getTime())
-  .slice(0, 5); 
+const allNews = getNewsFiltered.items;
+
 const publishedActivities = getAllActivities
-  .filter((a: any) => new Date(a.publication_date) < new Date())
-  .sort((a: any, b: any) => new Date(b.activity_date).getTime() - new Date(a.activity_date).getTime());
+  .filter((a: any) => a.status && new Date(a.activityDate) > new Date()) // Filtramos para mostrar actividades futuras
+  .sort((a: any, b: any) => new Date(a.activityDate).getTime() - new Date(b.activityDate).getTime());
 ---
 
 <Layout title="Home">
@@ -32,19 +30,17 @@ const publishedActivities = getAllActivities
     
     <main class="mt-16">
       
-      <!-- SECCIÓ NOTÍCIES -->
       <div>
         <h2 class="text-4xl font-bold tracking-tight text-left mb-4">
           Últimes notícies
         </h2>
         <ul class="grid md:grid-cols-5 gap-8">
-          {top5NewsEntries.map((newsEntry: any) => (
+          {allNews.map((newsEntry: any) => (
             <CardNews newsEntry={newsEntry} />
           ))}
         </ul>
       </div>
 
-      <!-- SECCIÓ ACTIVITATS -->
       <div class="mt-16">
         <h2 class="text-4xl font-bold tracking-tight text-left mb-8">
           Properes activitats

@@ -1,44 +1,39 @@
 ---
-// Importamos los componentes de estructura visual
+// src/pages/news.astro
 import Layout from "../layouts/Layout.astro";
-import Container from "../components/container.astro";
 import SectionHead from "../components/sectionhead.astro";
-
-// Importamos la tarjeta de noticia
+import Container from "../components/container.astro";
 import CardNews from "../components/ui/card_news.astro";
+import FilterNews from "../components/ui/filters.astro";
+import { getNews } from "../services/newsService";
 
-// Importamos el cliente GraphQL
-import { fetchGraphQL } from "../api";
+export const prerender = false;
 
-// 1. DEFINIMOS LA QUERY DE GRAPHQL
-const GET_ALL_NEWS_QUERY = `
-  query GetAllNewsPage {
-    getAllNews {
-      new_id
-      title
-      short_descr
-      sections
-      creation_date
-      publication_date
-      public
-      author
-      slug
-      image {
-        src
-        alt
-      }
-    }
-  }
-`;
+// 1. Extraemos los parámetros de la URL
+const page = parseInt(Astro.url.searchParams.get("page") || "1");
+const title = Astro.url.searchParams.get("title");
+const sectionId = Astro.url.searchParams.get("sectionId");
 
-// 2. OBTENEMOS LOS DATOS
-const data = await fetchGraphQL<any>(GET_ALL_NEWS_QUERY);
-const allNews = data?.getAllNews || [];
+// 2. Construimos el filtro
+const filter: any = {};
+if (title) filter.title = title;
+if (sectionId) filter.sectionId = parseInt(sectionId);
 
-// 3. PROCESAMOS LOS DATOS
-// Filtramos las que ya están publicadas (opcional) y las ordenamos de más nueva a más antigua
-const publishedNews = allNews
-  .filter((news: any) => new Date(news.publication_date) <= new Date() ); //&& news.public);
+// 3. Llamamos al servicio
+const { items: publishedNews } = await getNews({
+  page,
+  limit: 10,
+  filter,
+});
+
+console.log("Filtros recibidos:", { title, sectionId });
+
+// Helper para construir URLs manteniendo filtros actuales
+const getPaginationUrl = (newPage: number) => {
+  const params = new URLSearchParams(Astro.url.searchParams);
+  params.set("page", newPage.toString());
+  return `?${params.toString()}`;
+};
 ---
 
 <Layout title="Totes les Notícies">
@@ -46,25 +41,48 @@ const publishedNews = allNews
     <SectionHead align="center">
       <Fragment slot="title">Notícies</Fragment>
       <Fragment slot="desc">
-        Estigues al dia de les últimes novetats, esdeveniments i comunicats de la nostra associació.
+        Estigues al dia de les últimes novetats, esdeveniments i comunicats.
       </Fragment>
     </SectionHead>
 
-    <main class="mt-16 pb-24">
-      {publishedNews.length > 0 ? (
-        <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 w-full">
-          {publishedNews.map((newsEntry: any) => (
-            <CardNews newsEntry={newsEntry} />
-          ))}
-        </ul>
-      ) : (
-        <div class="text-center py-20 bg-gray-50 rounded-md border border-gray-100">
-          <h3 class="text-xl font-medium text-gray-500">
-            Encara no hi ha cap notícia publicada.
-          </h3>
-          <p class="text-gray-400 mt-2">Torna-ho a comprovar més endavant.</p>
-        </div>
-      )}
+    <FilterNews />
+
+    <main class="mt-10 pb-24">
+      {
+        publishedNews.length > 0 ? (
+          <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 w-full">
+            {publishedNews.map((newsEntry: any) => (
+              <CardNews newsEntry={newsEntry} />
+            ))}
+          </ul>
+        ) : (
+          <div class="text-center py-20 bg-gray-50 rounded-md border border-gray-100">
+            <h3 class="text-xl font-medium text-gray-500">
+              No s'han trobat notícies amb aquests filtres.
+            </h3>
+            <p class="text-gray-400 mt-2">Prova a canviar els criteris de cerca.</p>
+          </div>
+        )
+      }
+
+      <!-- Paginación -->
+      <div class="mt-12 flex justify-center items-center gap-6">
+        <a
+          href={getPaginationUrl(page - 1)}
+          class={`${page <= 1 ? "hidden" : "px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition"}`}
+        >
+          Anterior
+        </a>
+        
+        <span class="font-medium text-gray-700">Pàgina {page}</span>
+        
+        <a
+          href={getPaginationUrl(page + 1)}
+          class={`${publishedNews.length < 10 ? "hidden" : "px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition"}`}
+        >
+          Següent
+        </a>
+      </div>
     </main>
   </Container>
 </Layout>

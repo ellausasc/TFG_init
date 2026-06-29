@@ -11,57 +11,132 @@ datasource db {
   provider = "postgresql"
 }
 
-// prisma/schema.prisma
+model User {
+  id                   Int         @id @default(autoincrement())
+  code                 String      @unique
+  firstName            String
+  lastName1            String
+  lastName2            String?     // Opcional
+  dni                  String      @unique
+  phone                String?     // Opcional
+  email                String      @unique
+  password             String
+  birthDate            DateTime?
+  createdAt            DateTime    @default(now()) // data_alta
+  deletedAt            DateTime?                   // data_baixa
+  
+  // Relacions
+  roles                Role[]
+  createdNews          News[]      @relation("AuthorNews")
+  createdActivities    Activity[]  @relation("AuthorActivity")
+  enrolledActivities   Activity[]  @relation("Enrollments")
+}
+
+model Role {
+  id          Int       @id @default(autoincrement())
+  description String
+  
+  // Relacions
+  users       User[]
+  actions     Action[]
+  entities    Entity[]
+  sections    Section[]
+}
+
+model Entity {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  
+  // Relacions
+  roles       Role[]
+}
+
+model Action {
+  id          Int       @id @default(autoincrement())
+  description String
+  
+  // Relacions
+  roles       Role[]
+}
+
+model Section {
+  id               Int         @id @default(autoincrement())
+  name             String
+  description      String?
+  createdAt        DateTime    @default(now())
+  publishedAt      DateTime?
+  isActive         Boolean     @default(true)
+
+  //
+  mainNewsId       Int?        @unique
+  mainNews         News?       @relation("MainNews", fields: [mainNewsId], references: [id])
+  
+  // Relacions
+  news             News[]
+  activities       Activity[]
+  roles            Role[]
+}
+
+model Tag {
+  id          Int         @id @default(autoincrement())
+  description String      @unique
+  
+  // Relacions
+  news        News[]
+  activities  Activity[]
+}
 
 model News {
-  new_id           Int      @id @default(autoincrement())
-  title            String
-  short_descr      String
-  sections         String[] // PostgreSQL soporta arrays nativamente
-  creation_date    DateTime @default(now())
-  publication_date DateTime
-  public           Boolean  @default(false)
-  author           String
+  id                  Int       @id @default(autoincrement())
+  title               String
+  shortDescription    String
+  longDescription     String
+  createdAt           DateTime  @default(now())
+  publishedAt         DateTime?
+  status              String?
+  type                String?
+  mainImage           String?
+  secondaryImage      String?
+  slug                String    @unique
+
+  // Relacions N:1
+  authorId            Int
+  author              User      @relation("AuthorNews", fields: [authorId], references: [id])
+  sectionId           Int
+  section             Section   @relation(fields: [sectionId], references: [id])
   
-  // Aplanamos el objeto image
-  image_src        String
-  image_alt        String
-  
-  slug             String   @unique
+  // Relació M:N
+  tags                Tag[]
+
+  // Relació 1:1
+  mainPageOfId        Int?
+  mainPageOf          Section?  @relation("MainNews")
 }
 
 model Activity {
-  activity_id            Int      @id @default(autoincrement())
-  title                  String
-  short_descr            String
-  sections               String[]
-  creation_date          DateTime @default(now())
-  publication_date       DateTime
-  activity_date          DateTime
-  begin_inscription_date DateTime
-  end_inscription_date   DateTime
-  public                 Boolean  @default(false)
-  
-  // Aplanamos el objeto image
-  image_src              String
-  image_alt              String
-  
-  slug                   String   @unique
-}
+  id                    Int       @id @default(autoincrement())
+  title                 String
+  shortDescription      String
+  longDescription       String
+  createdAt             DateTime  @default(now())
+  publishedAt           DateTime?
+  status                Boolean   @default(false)
+  type                  String?
+  activityDate          DateTime
+  registrationStartDate DateTime?
+  registrationEndDate   DateTime?
+  mainImage             String?
+  secondaryImage        String?
+  slug                  String    @unique
 
-model User {
-  id                  Int       @id @default(autoincrement()) 
-  first_name          String    
-  last_name_1         String    
-  last_name_2         String?   
-  dni                 String    @unique 
-  phone               String?   
-  email               String    @unique
-  password            String    
-  birth_date          DateTime  
-  join_date           DateTime  @default(now()) 
-  leave_date          DateTime? 
-  fee_status          String    @default("UP_TO_DATE")
-  roles               String[]  
-  sections            String[]  
+  // Relacions N:1
+  authorId              Int
+  author                User      @relation("AuthorActivity", fields: [authorId], references: [id])
+  sectionId             Int
+  section               Section   @relation(fields: [sectionId], references: [id])
+  
+  // Relacions M:N
+  tags                  Tag[]
+  participants          User[]    @relation("Enrollments")
 }

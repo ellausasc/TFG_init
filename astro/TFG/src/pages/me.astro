@@ -1,8 +1,9 @@
 ---
+// src/pages/me.astro
 import Layout from "../layouts/Layout.astro";
 import Container from "../components/container.astro";
 import Sectionhead from "../components/sectionhead.astro";
-import ProfileForm from "../components/user_profile.astro"; // Importamos el nuevo componente
+import ProfileForm from "../components/user_profile.astro";
 ---
 
 <Layout title="El meu Perfil">
@@ -20,12 +21,85 @@ import ProfileForm from "../components/user_profile.astro"; // Importamos el nue
   </Container>
 </Layout>
 
-<script is:inline>
-  // Medida de seguridad: Si alguien intenta acceder a esta página sin haber 
-  // iniciado sesión (sin token), lo redirigimos automáticamente al login.
-  if (typeof localStorage !== "undefined") {
-    if (!localStorage.getItem("token")) {
-      window.location.href = "/login";
+<script type="module">
+  import { getMe, updateMe } from "/src/services/userService.js";
+
+  const form = document.getElementById("profile-form");
+  const content = document.getElementById("profile-content");
+  const loading = document.getElementById("loading");
+  const result = document.getElementById("result");
+
+  // 1. Verificación de seguridad inmediata
+  if (!localStorage.getItem("token")) {
+    window.location.href = "/login";
+  }
+
+  // 2. Lógica de carga
+  async function loadProfile() {
+    try {
+      const user = await getMe();
+      
+      // Rellenar campos automáticamente
+      Object.keys(user).forEach(key => {
+        const input = form.querySelector(`[name="${key}"]`);
+        if (input) {
+          if (key === 'birthDate' && user[key]) {
+            // CORRECCIÓN: Convertir el string del timestamp a número primero
+            const timestamp = Number(user[key]);
+            // Crear fecha y extraer YYYY-MM-DD
+            input.value = new Date(timestamp).toISOString().split('T')[0];
+          } else {
+            input.value = user[key] || '';
+          }
+        }
+      });
+      
+      loading.classList.add("hidden");
+      content.classList.remove("hidden");
+    } catch (err) {
+      console.error(err);
+      loading.textContent = "Error carregant dades.";
+      loading.classList.add("text-red-500");
     }
   }
+
+  // 3. Lógica de guardado
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    // Verificar sesión antes de enviar
+    if (!localStorage.getItem("token")) {
+        window.location.href = "/login";
+        return;
+    }
+
+    const formData = new FormData(form);
+    
+    result.textContent = "Desant...";
+    result.className = "text-center font-medium mt-3 text-blue-500";
+
+    try {
+      await updateMe({
+        firstName: formData.get("firstName"),
+        lastName1: formData.get("lastName1"),
+        lastName2: formData.get("lastName2"),
+        phone: formData.get("phone"),
+        birthDate: formData.get("birthDate")
+      });
+      
+      result.textContent = "Perfil actualitzat correctament!";
+      result.className = "text-center font-medium mt-3 text-green-500";
+      
+      setTimeout(() => {
+        result.classList.add("hidden");
+      }, 3000);
+      
+    } catch (err) {
+      console.error(err);
+      result.textContent = "Error al desar.";
+      result.className = "text-center font-medium mt-3 text-red-500";
+    }
+  });
+
+  loadProfile();
 </script>

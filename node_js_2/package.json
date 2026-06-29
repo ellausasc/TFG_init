@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node app.js",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "seed": "node prisma/seed_bd_2.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,7 +16,8 @@
   "devDependencies": {
     "@types/node": "^25.6.2",
     "dotenv": "^17.4.2",
-    "prisma": "^7.8.0"
+    "prisma": "^7.8.0",
+    "tsx": "^4.22.4"
   },
   "dependencies": {
     "@apollo/server": "^4.13.0",
@@ -29,10 +31,10 @@
     "express": "^4.22.2",
     "graphql": "^16.14.0",
     "jsonwebtoken": "^9.0.3",
-    "pg": "^8.20.0",
+    "pg": "^8.22.0",
     "typescript": "^6.0.3"
   },
   "prisma": {
-    "seed": "node prisma/seed_bd.js"
+    "seed": "npx tsx prisma/seed_db_2.ts"
   }
 }

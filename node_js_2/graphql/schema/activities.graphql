@@ -1,19 +1,48 @@
 type Activity {
-  activity_id: Int!
+  id: ID!
   title: String!
-  short_descr: String!
-  sections: [String!]!
-  creation_date: String!
-  publication_date: String!
-  activity_date: String!
-  begin_inscription_date: String!
-  end_inscription_date: String!
-  public: Boolean!
-  image: Image!
+  shortDescription: String!
+  longDescription: String!
+  createdAt: String!
+  publishedAt: String
+  status: Boolean!
+  type: String
+  activityDate: String!
+  registrationStartDate: String
+  registrationEndDate: String
+  mainImage: String
+  secondaryImage: String
   slug: String!
+  
+  # Relaciones
+  author: User!
+  section: Section!
+  tags: [Tag!]!
+  participants: [User!]! # Lista de usuarios inscritos
+}
+
+input CreateActivityInput {
+  title: String!
+  shortDescription: String!
+  longDescription: String!
+  status: Boolean
+  type: String
+  activityDate: String!
+  registrationStartDate: String
+  registrationEndDate: String
+  mainImage: String
+  secondaryImage: String
+  slug: String!
+  sectionId: Int!
+  tagIds: [Int!]
 }
 
 extend type Query {
   getAllActivities: [Activity!]!
   getActivityBySlug(slug: String!): Activity
+}
+
+extend type Mutation {
+  createActivity(input: CreateActivityInput!): Activity!
+  enrollInActivity(activityId: ID!): Boolean! # Para que el usuario logueado se apunte
 }

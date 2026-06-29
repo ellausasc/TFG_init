@@ -1,10 +1,9 @@
 ---
+// news/[slug].astro (Versión optimizada y segura)
 export const prerender = false;
 import Layout from "../../layouts/Layout.astro";
 import Container from "../../components/container.astro";
-import { render } from "astro:content";
-
-import { getNewsBySlug } from "../../api";
+import { getNewsBySlug } from "../../services/newsService";
 
 const { slug } = Astro.params;
 
@@ -14,55 +13,74 @@ if (!slug) {
 
 const news = await getNewsBySlug(slug);
 
-const displayDate = new Date(news.publication_date).toLocaleDateString("ca-ES");
+if (!news) {
+  return Astro.redirect('/404');
+}
 
-// Get the entry directly from the prop on render
-const { entry } = Astro.props;
+// 1. Manejo seguro de fechas
+const displayDate = news.publishedAt 
+  ? new Date(news.publishedAt).toLocaleDateString("ca-ES") 
+  : "Data no disponible";
 
+// 2. Manejo seguro de autor
+const authorFullName = news.author 
+  ? `${news.author.firstName} ${news.author.lastName1}` 
+  : "Anònim";
+
+// 3. Manejo seguro de fecha para el atributo datetime
+const isoDate = news.publishedAt ? new Date(news.publishedAt).toISOString() : "";
 ---
-
 
 <Layout title={news.title}>
   <Container>
     <div class="mx-auto max-w-3xl mt-14">
-      <span class="text-blue-400 uppercase tracking-wider text-sm font-medium">
-        {news.sections[0]}
-      </span>
-      <h1
-        class="text-4xl lg:text-5xl font-bold lg:tracking-tight mt-1 lg:leading-tight">
+      <!-- Verificamos si existe sección antes de renderizar -->
+      {news.section && (
+        <span class="text-blue-400 uppercase tracking-wider text-sm font-medium">
+          {news.section.name}
+        </span>
+      )}
+      
+      <h1 class="text-4xl lg:text-5xl font-bold lg:tracking-tight mt-1 lg:leading-tight">
         {news.title}
       </h1>
+      
       <div class="flex gap-2 mt-3 items-center flex-wrap md:flex-nowrap">
         <span class="text-gray-400">
-          {news.author}
+          {authorFullName}
         </span>
         <span class="text-gray-400">•</span>
-        <time
-          class="text-gray-400"
-          datetime={new Date(news.publication_date).toISOString()}>
+        <time class="text-gray-400" datetime={isoDate}>
           {displayDate}
         </time>
-        <span class="text-gray-400 hidden md:block">•</span>
-        <div class="w-full md:w-auto flex flex-wrap gap-3">
-          {
-            news.sections.map((tag: string) => (
-              <span class="text-sm text-gray-500">#{tag}</span>
-            ))
-          }
-        </div>
+        
+        <!-- Renderizado de tags con comprobación de existencia -->
+        {news.tags && news.tags.length > 0 && (
+          <>
+            <span class="text-gray-400 hidden md:block">•</span>
+            <div class="w-full md:w-auto flex flex-wrap gap-3">
+              {news.tags.map((tag: any) => (
+                <span class="text-sm text-gray-500">#{tag.description}</span>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
 
     <div class="mx-auto prose prose-lg mt-6 max-w-3xl">
-      <div class="text-justify" set:html={news.short_descr}>
+      <!-- shortDescription renderizado como HTML -->
+      <div class="text-justify font-semibold text-gray-700" set:html={news.shortDescription}></div>
+      
+      <!-- longDescription como texto simple (o HTML si tu base de datos guarda formato) -->
+      <div class="text-justify mt-4 whitespace-pre-line">
+        {news.longDescription}
       </div>
-      <p class="text-justify">
-        {news.long_descr}
-      </p>
     </div>
+    
     <div class="text-center mt-8">
-      <button
-        onclick="history.back()"
+      <a
+        href="javascript:history.back()"
         class="bg-gray-100 px-5 py-3 rounded-md hover:bg-gray-200 transition"
         >← Back</a
       >

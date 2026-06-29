@@ -7,7 +7,7 @@ export interface Props {
 
 const { activityEntry } = Astro.props;
 
-// Ens portem la funció aquí per fer el component 100% autònom
+// Adaptación: Usamos activityDate (camelCase)
 const formatDate = (dateStr: string) => {
   const d = new Date(dateStr);
   return {
@@ -18,7 +18,7 @@ const formatDate = (dateStr: string) => {
   };
 };
 
-const dateInfo = formatDate(activityEntry.activity_date);
+const dateInfo = formatDate(activityEntry.activityDate);
 ---
 
 <li class="bg-white rounded-md shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
@@ -28,8 +28,8 @@ const dateInfo = formatDate(activityEntry.activity_date);
   >
     <div class="w-full sm:w-1/3 h-48 sm:h-auto overflow-hidden">
       <Picture
-        src={activityEntry.image?.src || "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?&fit=crop&w=430&h=240"}
-        alt={activityEntry.image?.alt || "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?&fit=crop&w=430&h=240"}
+        src={activityEntry.mainImage || "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?&fit=crop&w=430&h=240"}
+        alt={activityEntry.title}
         width={430}
         height={240}
         sizes="(max-width:800px) 100vw, 800px"
@@ -53,7 +53,9 @@ const dateInfo = formatDate(activityEntry.activity_date);
     
     <div class="p-4 flex flex-col justify-center flex-1">
       <div class="text-gray-500 text-[10px] mb-1 uppercase font-semibold tracking-wider">
-        {dateInfo.year} <span class="text-slate-400 mx-1">•</span> <span class="text-slate-700">COMPETICIONS</span>
+        {dateInfo.year} 
+        <span class="text-slate-400 mx-1">•</span> 
+        <span class="text-slate-700">ACTIVITAT</span>
       </div>
       <h3 class="text-lg font-bold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">
         {activityEntry.title}

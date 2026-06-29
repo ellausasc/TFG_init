@@ -1,41 +1,81 @@
-type Query {
-  getAllNews: [News!]!
-  getNewsBySlug(slug: String!): News
-}
-
-extend type Mutation {
-  createNews(input: CreateNewsInput!): News!
-  updateNews(id: Int!, input: UpdateNewsInput!): News!
-}
-
 type News {
-  new_id: Int!
+  id: ID!
   title: String!
-  short_descr: String!
-  sections: [String!]!
-  creation_date: String!
-  publication_date: String!
-  public: Boolean!
-  author: String!
-  image: Image!
+  shortDescription: String!
+  longDescription: String!
+  createdAt: String!
+  publishedAt: String
+  status: String
+  type: String
+  mainImage: String
+  secondaryImage: String
   slug: String!
+  
+  # Relaciones
+  author: User!
+  section: Section!
+  tags: [Tag!]!
+  mainPageOf: Section
 }
 
 input CreateNewsInput {
   title: String!
-  short_descr: String!
-  sections: [String!]!
-  publication_date: String!
-  public: Boolean
-  author: String!
+  shortDescription: String!
+  longDescription: String!
+  status: String
+  type: String
+  publishedAt: String
+  mainImage: String
+  secondaryImage: String
+  sectionId: Int!
+  tagIds: [Int!]
 }
 
+# NUEVO: Input para actualizar (los campos no tienen '!' porque son opcionales)
 input UpdateNewsInput {
   title: String
-  short_descr: String
-  sections: [String!]
-  publication_date: String
-  public: Boolean
-  author: String
+  shortDescription: String
+  longDescription: String
+  status: String
+  type: String
+  mainImage: String
+  secondaryImage: String
   slug: String
+  sectionId: Int
+  tagIds: [Int!]
+}
+
+input NewsFilterInput {
+  title: String
+  sectionId: Int
+  authorId: Int
+  tagIds: [Int!]
+}
+
+input NewsSortInput {
+  field: String # "publishedAt", "title", "author"
+  direction: String # "ASC", "DESC"
+}
+
+# Tipo para devolver resultados paginados
+type NewsPaginationResult {
+  items: [News!]!
+  totalCount: Int!
+}
+
+extend type Query {
+  getAllNews: [News!]!
+  getNewsBySlug(slug: String!): News
+  getNewsFiltered(
+    filter: NewsFilterInput
+    sort: NewsSortInput,
+    page: Int,
+    limit: Int
+  ): NewsPaginationResult!
+}
+
+extend type Mutation {
+  createNews(input: CreateNewsInput!): News!
+  # DESCOMENTADO: Ahora GraphQL ya sabe que esta mutación existe
+  updateNews(id: ID!, input: UpdateNewsInput!): News!
 }

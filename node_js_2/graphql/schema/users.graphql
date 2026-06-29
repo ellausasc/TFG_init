@@ -1,18 +1,23 @@
-# Definición del Usuario (sin exponer la contraseña)
+# Definimos el tipo Role para que Prisma lo inyecte directamente sin mapeos
+type Role {
+  id: ID!
+  description: String!
+}
+
+# Definición del Usuario (espejo exacto de Prisma)
 type User {
   id: ID!
-  first_name: String!
-  last_name_1: String!
-  last_name_2: String
+  code: String!           # Añadimos el código de socio que genera Prisma
+  firstName: String!
+  lastName1: String!
+  lastName2: String
   dni: String!
   phone: String
   email: String!
-  birth_date: String!
-  join_date: String!
-  leave_date: String
-  fee_status: String!
-  roles: [String!]!
-  sections: [String!]!
+  birthDate: String
+  createdAt: String!      # Antes join_date
+  deletedAt: String       # Antes leave_date
+  roles: [Role!]!         # Ahora devuelve una lista de objetos Role
 }
 
 # Payload para autenticación
@@ -21,37 +26,36 @@ type AuthPayload {
   user: User!
 }
 
-# Input de Registro
+# Input de Registro (también en camelCase para que coincida con el frontend)
 input RegisterUserInput {
-  first_name: String!
-  last_name_1: String!
-  last_name_2: String
+  firstName: String!
+  lastName1: String!
+  lastName2: String
   dni: String!
   phone: String
   email: String!
-  password: String! # Recibe el string ya encriptado desde Astro
-  birth_date: String!
-  roles: [String!]
-  sections: [String!]
+  password: String! 
+  birthDate: String!
+  roles: [String!]        # Aquí puedes seguir recibiendo ["ADMIN"] desde el formulario
 }
 
 input UpdateUserInput {
-  first_name: String
-  last_name_1: String
-  last_name_2: String
+  firstName: String
+  lastName1: String
+  lastName2: String
   dni: String
   phone: String
   email: String
-  birth_date: String
+  birthDate: String
 }
 
-type Query {
+extend type Query {
   getUserById(id: ID!): User
   getAllUsers: [User!]!
   me: User
 }
 
-type Mutation {
+extend type Mutation {
   registerUser(input: RegisterUserInput!): AuthPayload!
   loginUser(email: String!, password: String!): AuthPayload!
   updateUser(input: UpdateUserInput!): User!

@@ -21,15 +21,20 @@ const userTypeDefs = fs.readFileSync(
   path.join(__dirname, "./schema/users.graphql"),
   "utf-8",
 );
+const sectionTypeDefs = fs.readFileSync(
+  path.join(__dirname, "./schema/sections.graphql"),
+  "utf-8",
+);
 
 //Resolvers
-const newsResolvers = require("./resolvers/news");
+const newsResolvers = require("./resolvers/newsResolver");
 const activitiesResolvers = require("./resolvers/activities");
-const usersResolvers = require("./resolvers/users");
+const usersResolvers = require("./resolvers/usersResolver");
+const sectionsResolvers = require("./resolvers/sectionsResolver");
 
 const schema = makeExecutableSchema({
-  typeDefs: [sharedTypeDefs, newTypeDefs, activityTypeDefs, userTypeDefs],
-  resolvers: mergeResolvers([newsResolvers, activitiesResolvers, usersResolvers]),
+  typeDefs: [sharedTypeDefs, newTypeDefs, activityTypeDefs, userTypeDefs, sectionTypeDefs],
+  resolvers: mergeResolvers([newsResolvers, activitiesResolvers, usersResolvers, sectionsResolvers]),
 });
 
 module.exports = { schema };

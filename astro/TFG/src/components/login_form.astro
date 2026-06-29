@@ -2,7 +2,7 @@
 import Button from "./ui/button.astro";
 ---
 
-<form id="form" class="max-w-sm mx-auto">
+<form id="form" class="max-w-sm mx-auto" novalidate>
   <div class="mb-5">
     <input
       type="email"
@@ -42,6 +42,7 @@ import Button from "./ui/button.astro";
     display: none;
   }
 
+  /* Solo mostramos errores si el formulario tiene la clase "was-validated" */
   .was-validated :placeholder-shown:invalid ~ .empty-feedback {
     display: block;
   }
@@ -56,4 +57,47 @@ import Button from "./ui/button.astro";
   }
 </style>
 
-<script src = "../scripts/login.js"></script>
+<script type="module">
+  import { login } from "/src/services/authService.js";
+
+  const form = document.getElementById("form");
+  const result = document.getElementById("result");
+
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    
+    // Al añadir esta clase, activamos el CSS que muestra los errores
+    form.classList.add("was-validated");
+    
+    if (!form.checkValidity()) {
+      // Enfocamos el primer campo erróneo
+      form.querySelectorAll(":invalid")[0].focus();
+      return;
+    }
+    
+    const formData = new FormData(form);
+    const email = formData.get("email");
+    const password = formData.get("password");
+
+    result.innerHTML = "Iniciant sessió...";
+    result.classList.remove("text-red-500", "text-green-500", "hidden");
+    result.classList.add("text-gray-600", "block");
+
+    try {
+      const { token, user } = await login(email, password);
+      localStorage.setItem("token", token);
+
+      result.classList.replace("text-gray-600", "text-green-500");
+      result.innerHTML = `Benvingut de nou, ${user.firstName}!`;
+      
+      setTimeout(() => {
+        window.location.href = "/me";
+      }, 1000);
+      
+    } catch (error) {
+      console.error(error);
+      result.classList.replace("text-gray-600", "text-red-500");
+      result.innerHTML = error.message || "Hi ha hagut un error de connexió.";
+    }
+  });
+</script>
