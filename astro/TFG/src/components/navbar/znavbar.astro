@@ -2,6 +2,23 @@
 import Dropdown from "./zdropdown.astro";
 import Container from "../container.astro";
 import { Astronav, MenuItems, MenuIcon } from "astro-navbar";
+import { getAllSections } from "../../services/sectionsService";
+
+// 1. Carregar seccions dinàmicament
+let sections = [];
+try {
+  const allSections = await getAllSections();
+  // Filtrem només les actives
+  sections = allSections.filter((s: any) => s.isActive === true);
+} catch (error) {
+  console.error("Error carregant seccions:", error);
+}
+
+// 2. Mapejar les seccions per al menú
+const sectionChildren = sections.map((section: any) => ({
+  title: section.name,
+  path: `/sections/${section.id}` 
+}));
 
 const menuitems = [
   { title: "Noticies", path: "/news" },
@@ -9,13 +26,9 @@ const menuitems = [
   {
     title: "Seccions",
     path: "#",
-    children: [
-      { title: "Llengua", path: "/seccio/test1" },
-      { title: "Esports", path: "/seccio/test2" },
-      { title: "Educacio", path: "#" },
-      { title: "Cultura", path: "#" },
-      { title: "Solidaritat", path: "#" },
-    ],
+    children: sectionChildren.length > 0 
+      ? sectionChildren 
+      : [{ title: "Cap secció disponible", path: "#" }],
   },
   { title: "Qui som?", path: "/#" },
   { title: "Contacte", path: "/contact" },
@@ -69,12 +82,12 @@ const userItems = [
             ))
           }
 
-          {/* 1. ÁREA PRIVADA (ESTADO: INVITADO) - Cambiado a <div> */}
+          {/* 1. ÀREA PRIVADA (ESTAT: INVITAT) */}
           <div id="guest-menu" class="auth-menu">
-            <Dropdown title="Area privada" children={guestItems} lastItem={true} />
+            <Dropdown title="Àrea privada" children={guestItems} lastItem={true} />
           </div>
 
-          {/* 2. ÁREA PRIVADA (ESTADO: LOGUEADO) - Cambiado a <div> */}
+          {/* 2. ÀREA PRIVADA (ESTAT: LOGUEJAT) */}
           <div id="user-menu" class="auth-menu">
             <Dropdown title="Àrea privada" children={userItems} lastItem={true} />
           </div>
@@ -85,17 +98,12 @@ const userItems = [
 </Container>
 
 <style is:global>
-  /* Ocultamos ambos menús por defecto para evitar parpadeos visuales */
   .auth-menu {
     display: none !important;
   }
-
-  /* Si NO hay token (no está la clase is-logged-in), forzamos a mostrar guest-menu */
   html:not(.is-logged-in) #guest-menu {
     display: block !important;
   }
-
-  /* Si SÍ hay token (está la clase is-logged-in), forzamos a mostrar user-menu */
   html.is-logged-in #user-menu {
     display: block !important;
   }
@@ -113,10 +121,7 @@ const userItems = [
     }
   }
 
-  // Ejecutar inmediatamente
   checkAuth();
-  
-  // Soporte para Astro View Transitions
   document.addEventListener("astro:after-swap", checkAuth);
 </script>
 

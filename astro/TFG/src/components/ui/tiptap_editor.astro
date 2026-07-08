@@ -2,10 +2,12 @@
 export interface Props {
   name: string;
   label: string;
+  id: string;
   required?: boolean;
+  initialValue?: string;
 }
 
-const { name, label, required = false } = Astro.props;
+const { name, label, id, required = false, initialValue = "" } = Astro.props; 
 ---
 
 <div class="mb-7 tiptap-wrapper" data-editor-name={name}>
@@ -27,7 +29,7 @@ const { name, label, required = false } = Astro.props;
 
   <div class="tiptap-editor bg-white border-2 border-gray-300 rounded-b-md p-4 min-h-[150px] cursor-text"></div>
   
-  <input type="hidden" name={name} id={name} required={required} />
+  <input type="hidden" name={name} id={id} required={required} value={initialValue}/>
   
   <div class="rich-text-error hidden text-red-400 text-sm mt-1">
     Si us plau, omple aquest camp.

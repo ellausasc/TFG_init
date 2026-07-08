@@ -1,0 +1,119 @@
+---
+import Layout from "../../../../layouts/Layout.astro";
+import Container from "../../../../components/container.astro";
+import Sectionhead from "../../../../components/sectionhead.astro";
+import Button from "../../../../components/ui/button.astro";
+import SectionFields from "../../../../components/forms/section_fields.astro";
+import NewsFields from "../../../../components/forms/news_fields.astro";
+import { getSectionById, updateSection } from "../../../../services/sectionsService";
+
+export const prerender = false;
+
+const { id } = Astro.params;
+
+if (!id) return Astro.redirect('/admin/sections');
+
+const section = await getSectionById(id);
+
+if (!section) return Astro.redirect('/404');
+---
+
+<Layout title="Editar Secció">
+  <Container>
+    <Sectionhead>
+      <Fragment slot="title">Editar secció: {section.name}</Fragment>
+      <Fragment slot="desc">
+        Modifica les dades de la secció i la seva notícia principal.
+      </Fragment>
+    </Sectionhead>
+  </Container>
+  
+  <Container class="pb-24 mt-8">
+    <form id="master-form" class="max-w-3xl mx-auto" novalidate>
+      
+      <h2 class="text-xl font-bold mb-6 text-gray-800 border-b pb-2">Informació de la Secció</h2>
+      <SectionFields initialData={section} />
+      
+      <h2 class="text-xl font-bold mb-6 text-gray-800 border-b pb-2">Informació de la pàgina principal</h2>
+
+      <NewsFields 
+        initialData={section.mainNews}
+        showTitle={false} 
+        showSection={false} 
+        showDate={false} 
+        showTags={false} 
+        showIsPublic={false}
+      />
+      
+      <div class="mt-8 text-center">
+        <Button type="submit" size="lg">Guardar Canvis</Button>
+      </div>
+      
+      <div id="result" class="font-medium mt-4 hidden text-center"></div>
+    </form>
+  </Container>
+</Layout>
+
+<script is:inline define:vars={{ section }}>
+  window.addEventListener('DOMContentLoaded', () => {
+    const shortDesc = document.getElementById('newsShort');
+    const longDesc = document.getElementById('newsLong');
+    
+    if (shortDesc) shortDesc.value = section.mainNews?.shortDescription || "";
+    if (longDesc) longDesc.value = section.mainNews?.longDescription || "";
+  });
+</script>
+
+<script>
+  import { updateSection } from "../../../../services/sectionsService";
+
+  const form = document.getElementById("master-form") as HTMLFormElement;
+  // Obtenim l'ID de l'URL per la mutació
+  const id = window.location.pathname.split('/').pop() || "";
+  
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    
+    const shortDesc = document.getElementById("newsShort") as HTMLInputElement;
+    const longDesc = document.getElementById("newsLong") as HTMLInputElement;
+
+    const input = {
+      name: formData.get("name"),
+      description: formData.get("description"),
+      isActive: formData.get("isActive") === "on",
+      mainNews: {
+        title: formData.get("name"),
+        shortDescription: shortDesc?.value || "",
+        longDescription: longDesc?.value || "",
+        status: "PUBLISHED",
+      }
+    };
+
+    console.log("Short description value:", shortDesc?.value);
+    console.log("Long description value:", longDesc?.value);
+
+    const result = document.getElementById("result");
+    const token = localStorage.getItem("token") || "";
+
+    try {
+      result!.innerText = "Actualitzant secció...";
+      result!.className = "font-medium mt-4 text-blue-600 block text-center";
+      
+      // Utilitzem updateSection en lloc de createSection
+      await updateSection(id, input, token);
+      
+      result!.innerText = "Secció actualitzada correctament!";
+      result!.className = "font-medium mt-4 text-green-600 block text-center";
+    } catch (err: any) {
+      result!.innerText = "Error: " + err.message;
+      result!.className = "font-medium mt-4 text-red-600 block text-center";
+    }
+  });
+</script>
+
+<script is:inline>
+  if (typeof localStorage !== "undefined" && !localStorage.getItem("token")) {
+    window.location.href = "/login";
+  }
+</script>

@@ -22,10 +22,20 @@ const GET_SECTION_BY_ID_QUERY = `
       description
       isActive
       publishedAt
+      # Afegim els detalls a la notícia principal (la que edites al formulari)
+      mainNews {
+        id
+        title
+        shortDescription
+        longDescription
+      }
+      # Afegim els detalls a la llista de notícies associades
       news {
         id
         title
         slug
+        shortDescription
+        longDescription
       }
     }
   }
@@ -105,6 +115,11 @@ export async function updateSection(id: string, input: any, token: string) {
       variables: { id, input }
     }),
   });
+
+  console.log("Body sent to server:", JSON.stringify({
+    query: UPDATE_SECTION_MUTATION,
+    variables: { id, input }
+  }));
 
   const result = await response.json();
   if (result.errors) throw new Error(result.errors[0].message);

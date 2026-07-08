@@ -36,6 +36,13 @@ input CreateSectionMainNewsInput {
   tagIds: [Int!]
 }
 
+input UpdateSectionMainNewsInput {
+  title: String
+  shortDescription: String
+  longDescription: String
+  status: String
+}
+
 # Input para MODIFICAR una sección existente
 # Todos los campos son opcionales para permitir actualizaciones parciales
 input UpdateSectionInput {
@@ -43,7 +50,7 @@ input UpdateSectionInput {
   description: String
   isActive: Boolean
   publishedAt: String
-  mainNewsid: Int
+  mainNews: UpdateSectionMainNewsInput
 }
 
 # Consultas (Queries)

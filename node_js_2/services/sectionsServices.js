@@ -87,18 +87,36 @@ const update = async (id, input, userId) => {
     throw new Error("No estàs autenticat. Has d'iniciar sessió.");
   }
 
-  const dataToUpdate = { ...input };
+  // 1. Separem mainNews de la resta de dades
+  const { mainNews, mainNewsId, ...sectionData } = input;
+  const dataToUpdate = { ...sectionData };
 
-  if (input.publishedAt) {
-    dataToUpdate.publishedAt = new Date(input.publishedAt);
+  // 2. Formateig de dates
+  if (dataToUpdate.publishedAt) {
+    dataToUpdate.publishedAt = new Date(dataToUpdate.publishedAt);
   }
 
-  // Permite actualizar qué noticia es la portada (Relación 1:1)
-  if (input.mainNewsId) {
-    dataToUpdate.mainNews = { connect: { id: parseInt(input.mainNewsId) } };
-    delete dataToUpdate.mainNewsId;
+  console.log("News data received for update:", mainNews);
+
+  // 3. Lògica de mainNews
+  // A) Si ens envien un objecte amb dades (actualització de camps)
+  if (mainNews) {
+    dataToUpdate.mainNews = {
+      update: {
+        title: mainNews.title,
+        shortDescription: mainNews.shortDescription,
+        longDescription: mainNews.longDescription,
+        status: mainNews.status,
+        type: mainNews.type
+      }
+    };
+  } 
+  // B) Si només ens envien un ID (connexió)
+  else if (mainNewsId) {
+    dataToUpdate.mainNews = { connect: { id: parseInt(mainNewsId) } };
   }
 
+  // 4. Execució amb Prisma
   return await prisma.section.update({
     where: { id: parseInt(id) },
     data: dataToUpdate,
