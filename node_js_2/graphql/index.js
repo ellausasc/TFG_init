@@ -25,10 +25,9 @@ const sectionTypeDefs = fs.readFileSync(
   path.join(__dirname, "./schema/sections.graphql"),
   "utf-8",
 );
-
 //Resolvers
 const newsResolvers = require("./resolvers/newsResolver");
-const activitiesResolvers = require("./resolvers/activities");
+const activitiesResolvers = require("./resolvers/activitiesResolver");
 const usersResolvers = require("./resolvers/usersResolver");
 const sectionsResolvers = require("./resolvers/sectionsResolver");
 

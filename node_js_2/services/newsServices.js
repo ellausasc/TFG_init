@@ -7,8 +7,7 @@ const getAll = async () => {
     orderBy: { publishedAt: 'desc' },
     include: {
       author: true,
-      section: true,
-      tags: true
+      section: true
     }
   });
 };
@@ -18,8 +17,7 @@ const getBySlug = async (slug) => {
     where: { slug },
     include: {
       author: true,
-      section: true,
-      tags: true
+      section: true
     }
   });
 };
@@ -29,8 +27,7 @@ const getById = async (id) => {
     where: { id: parseInt(id) },
     include: {
       author: true,
-      section: true,
-      tags: true
+      section: true
     }
   });
 };
@@ -47,9 +44,6 @@ const getFiltered = async ({ filter, sort, page, limit }) => {
     if (filter.title) where.title = { contains: filter.title, mode: 'insensitive' };
     if (filter.sectionId) where.sectionId = parseInt(filter.sectionId);
     if (filter.authorId) where.authorId = parseInt(filter.authorId);
-    if (filter.tagIds && filter.tagIds.length > 0) {
-      where.tags = { some: { id: { in: filter.tagIds.map(id => parseInt(id)) } } };
-    }
   }
 
   const orderBy = {};
@@ -66,7 +60,7 @@ const getFiltered = async ({ filter, sort, page, limit }) => {
       orderBy,
       skip,
       take: pageSize,
-      include: { author: true, section: true, tags: true }
+      include: { author: true, section: true }
     }),
     prisma.news.count({ where })
   ]);
@@ -103,12 +97,9 @@ const create = async (input, userId) => {
       
       author: { connect: { id: userId } },
       section: { connect: { id: parseInt(input.sectionId) } },
-      
-      tags: input.tagIds && input.tagIds.length > 0 
-        ? { connect: input.tagIds.map(id => ({ id: parseInt(id) })) }
-        : undefined
+  
     },
-    include: { author: true, section: true, tags: true }
+    include: { author: true, section: true }
   });
 };
 
@@ -136,11 +127,6 @@ const update = async (id, input) => {
   if (input.sectionId) {
     dataToUpdate.section = { connect: { id: parseInt(input.sectionId) } };
     delete dataToUpdate.sectionId;
-  }
-
-  if (input.tagIds) {
-    dataToUpdate.tags = { set: input.tagIds.map(tagId => ({ id: parseInt(tagId) })) };
-    delete dataToUpdate.tagIds;
   }
 
   return await prisma.news.update({

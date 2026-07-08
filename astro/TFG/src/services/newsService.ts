@@ -1,6 +1,6 @@
 import { fetchGraphQL } from "../api";
 
-// --- QUERIES ---
+// --- QUERIES I MUTACIONS ---
 
 const GET_NEWS_BY_SLUG = `
   query GetNewsBySlug($slug: String!) {
@@ -18,9 +18,6 @@ const GET_NEWS_BY_SLUG = `
       }
       section {
         name
-      }
-      tags {
-        description
       }
     }
   }
@@ -59,10 +56,10 @@ const CREATE_NEWS_MUTATION = `
   }
 `;
 
-// --- FUNCIONES ---
+// --- FUNCIONS ---
 
 /**
- * Obtiene una noticia específica por su slug
+ * Obté una notícia específica pel seu slug
  */
 export async function getNewsBySlug(slug: string) {
   const data = await fetchGraphQL<{ getNewsBySlug: any }>(GET_NEWS_BY_SLUG, { slug });
@@ -70,8 +67,8 @@ export async function getNewsBySlug(slug: string) {
 }
 
 /**
- * Obtiene un listado de noticias con filtros, paginación y ordenación.
- * Si no se pasan parámetros, usa valores por defecto.
+ * Obté un llistat de notícies amb filtres, paginació i ordenació.
+ * Si no es passen paràmetres, utilitza valors per defecte.
  */
 export async function getNews(params: { 
   page?: number, 
@@ -94,8 +91,7 @@ export async function getNews(params: {
 
   const result = data?.getNewsFiltered || { items: [], totalCount: 0 };
 
-  // Opcional: Filtro local adicional si necesitas asegurar la fecha en el frontend
-  // Aunque lo ideal es que esto lo gestione el backend directamente.
+  // Filtre local addicional per assegurar la data en el frontend
   const items = result.items.filter((news: any) => 
     news.status && news.publishedAt && new Date(news.publishedAt) <= new Date()
   );
@@ -106,25 +102,17 @@ export async function getNews(params: {
   };
 }
 
+/**
+ * Crea una nova notícia utilitzant la funció centralitzada.
+ */
 export async function createNews(input: any, token: string) {
-  // Nota: Asegúrate de que esta URL sea correcta según tu entorno
-  const response = await fetch("http://localhost:4000/graphql", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      query: CREATE_NEWS_MUTATION,
-      variables: { input }
-    }),
-  });
+  // Passem el token dins l'objecte de capçaleres a fetchGraphQL.
+  // Els errors ja els gestiona el propi fitxer api.ts automàticament.
+  const data = await fetchGraphQL<{ createNews: any }>(
+    CREATE_NEWS_MUTATION,
+    { input },
+    { Authorization: `Bearer ${token}` }
+  );
 
-  const result = await response.json();
-
-  if (result.errors && result.errors.length > 0) {
-    throw new Error(result.errors[0].message);
-  }
-
-  return result.data.createNews;
+  return data.createNews;
 }

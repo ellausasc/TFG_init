@@ -4,12 +4,6 @@ type Image {
   alt: String!
 }
 
-# Tipos auxiliares que usaremos en las relaciones
-type Tag {
-  id: ID!
-  description: String!
-}
-
 # Iniciamos los bloques Query y Mutation base
 type Query {
   _empty: String

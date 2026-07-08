@@ -1,0 +1,83 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import Container from "../../../components/container.astro";
+import Sectionhead from "../../../components/sectionhead.astro";
+import Button from "../../../components/ui/button.astro";
+import ActivityFields from "../../../components/forms/activities_fields.astro";
+---
+
+<Layout title="Crear Activitat">
+  <Container>
+    <Sectionhead>
+      <Fragment slot="title">Crear nova activitat</Fragment>
+      <Fragment slot="desc">Afegeix una nova activitat perquè els usuaris s'hi puguin inscriure.</Fragment>
+    </Sectionhead>
+  </Container>
+  
+  <Container class="pt-16 pb-24">
+    <form id="activity-form" class="max-w-3xl mx-auto" novalidate>
+      <ActivityFields />
+      
+      <div class="mt-8 text-center">
+        <Button type="submit" size="lg">Crear Activitat</Button>
+      </div>
+      <div id="activity-result" class="font-medium mt-4 hidden text-center"></div>
+    </form>
+  </Container>
+</Layout>
+
+<script>
+  // NOTA: Assegura't de crear aquest servei amb la mutació 'createActivity'
+  import { createActivity } from "../../../services/activitiesService";
+
+  const form = document.getElementById("activity-form") as HTMLFormElement;
+  
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const shortDescInput = document.getElementById("activityShort") as HTMLInputElement;
+    const longDescInput = document.getElementById("activityLong") as HTMLInputElement;
+
+    // Control de les dates opcionals
+    const regStart = formData.get("registrationStartDate") as string;
+    const regEnd = formData.get("registrationEndDate") as string;
+
+    const input = {
+      title: formData.get("title"),
+      shortDescription: shortDescInput?.value || "",
+      longDescription: longDescInput?.value || "",
+      sectionId: parseInt(formData.get("sectionId") as string),
+      status: formData.get("status") === "on", // GraphQL espera un Boolean
+      type: formData.get("type"),
+      activityDate: new Date(formData.get("activityDate") as string).toISOString(),
+      registrationStartDate: regStart ? new Date(regStart).toISOString() : null,
+      registrationEndDate: regEnd ? new Date(regEnd).toISOString() : null,
+      mainImage: formData.get("mainImage") || null,
+      secondaryImage: formData.get("secondaryImage") || null
+    };
+
+    const result = document.getElementById("activity-result");
+    const token = localStorage.getItem("token") || "";
+
+    try {
+      result!.innerText = "Creant activitat...";
+      result!.className = "font-medium mt-4 text-blue-600 block text-center";
+      
+      await createActivity(input, token);
+      
+      result!.innerText = "Activitat creada correctament!";
+      result!.className = "font-medium mt-4 text-green-600 block text-center";
+      form.reset();
+    } catch (err: any) {
+      result!.innerText = "Error: " + err.message;
+      result!.className = "font-medium mt-4 text-red-600 block text-center";
+    }
+  });
+</script>
+
+<script is:inline>
+  if (typeof localStorage !== "undefined" && !localStorage.getItem("token")) {
+    window.location.href = "/login";
+  }
+</script>

@@ -14,7 +14,6 @@ type News {
   # Relaciones
   author: User!
   section: Section!
-  tags: [Tag!]!
   mainPageOf: Section
 }
 
@@ -28,7 +27,6 @@ input CreateNewsInput {
   mainImage: String
   secondaryImage: String
   sectionId: Int!
-  tagIds: [Int!]
 }
 
 # NUEVO: Input para actualizar (los campos no tienen '!' porque son opcionales)
@@ -42,14 +40,12 @@ input UpdateNewsInput {
   secondaryImage: String
   slug: String
   sectionId: Int
-  tagIds: [Int!]
 }
 
 input NewsFilterInput {
   title: String
   sectionId: Int
   authorId: Int
-  tagIds: [Int!]
 }
 
 input NewsSortInput {
@@ -71,7 +67,7 @@ extend type Query {
     sort: NewsSortInput,
     page: Int,
     limit: Int
-  ): NewsPaginationResult!
+  ): NewsPaginationResult
 }
 
 extend type Mutation {

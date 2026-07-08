@@ -1,11 +1,11 @@
 ---
-// src/pages/news.astro
+// src/pages/activities.astro
 import Layout from "../layouts/Layout.astro";
 import SectionHead from "../components/sectionhead.astro";
 import Container from "../components/container.astro";
-import CardNews from "../components/ui/card_news.astro";
-import FilterNews from "../components/ui/filters_news.astro";
-import { getNews } from "../services/newsService";
+import CardActivity from "../components/ui/card_activity.astro";
+import FilterActivities from "../components/ui/filters_activities.astro"; // Suposant que crearàs aquest component
+import { getActivities } from "../services/activitiesService";
 
 export const prerender = false;
 
@@ -19,8 +19,8 @@ const filter: any = {};
 if (title) filter.title = title;
 if (sectionId) filter.sectionId = parseInt(sectionId);
 
-// 3. Llamamos al servicio
-const { items: publishedNews } = await getNews({
+// 3. Llamamos al servicio de actividades
+const { items: publishedActivities } = await getActivities({
   page,
   limit: 10,
   filter,
@@ -34,29 +34,29 @@ const getPaginationUrl = (newPage: number) => {
 };
 ---
 
-<Layout title="Totes les Notícies">
+<Layout title="Totes les Activitats">
   <Container>
     <SectionHead align="center">
-      <Fragment slot="title">Notícies</Fragment>
+      <Fragment slot="title">Activitats</Fragment>
       <Fragment slot="desc">
-        Estigues al dia de les últimes novetats, esdeveniments i comunicats.
+        Descobreix totes les nostres propostes, tallers i esdeveniments.
       </Fragment>
     </SectionHead>
 
-    <FilterNews />
+    <FilterActivities />
 
     <main class="mt-10 pb-24">
       {
-        publishedNews.length > 0 ? (
-          <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 w-full">
-            {publishedNews.map((newsEntry: any) => (
-              <CardNews newsEntry={newsEntry} />
+        publishedActivities.length > 0 ? (
+          <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
+            {publishedActivities.map((activityEntry: any) => (
+              <CardActivity activityEntry={activityEntry} />
             ))}
           </ul>
         ) : (
           <div class="text-center py-20 rounded-md">
-            <h3 class="text-xl font-medium ">
-              No s'han trobat notícies amb aquests filtres.
+            <h3 class="text-xl font-medium">
+              No s'han trobat activitats amb aquests filtres.
             </h3>
             <p class="text-gray-400 mt-2">Prova a canviar els criteris de cerca.</p>
           </div>
@@ -76,7 +76,7 @@ const getPaginationUrl = (newPage: number) => {
         
         <a
           href={getPaginationUrl(page + 1)}
-          class={`${publishedNews.length < 10 ? "hidden" : "px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition"}`}
+          class={`${publishedActivities.length < 10 ? "hidden" : "px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition"}`}
         >
           Següent
         </a>

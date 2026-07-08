@@ -1,0 +1,61 @@
+---
+// src/components/FilterActivities.astro
+
+// Recuperem els paràmetres actuals de l'URL per mantenir l'estat dels filtres
+const title = Astro.url.searchParams.get("title") || "";
+const sectionId = Astro.url.searchParams.get("sectionId") || "";
+const location = Astro.url.searchParams.get("location") || "";
+---
+
+<form method="GET" action="/activities" class="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-gray-50 rounded-lg mb-10">
+  
+  <input type="hidden" name="page" value="1" />
+
+  <!-- Filtro per Títol -->
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">Cerca per títol</label>
+    <input
+      type="text"
+      name="title"
+      value={title}
+      placeholder="Nom de l'activitat..."
+      class="w-full px-4 py-3 border-2 rounded-md outline-none focus:ring-4 border-gray-300 focus:border-gray-600 ring-gray-100"
+    />
+  </div>
+
+  <!-- Filtro per Ubicació -->
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">Ubicació</label>
+    <input
+      type="text"
+      name="location"
+      value={location}
+      placeholder="Ex: Girona"
+      class="w-full px-4 py-3 border-2 rounded-md outline-none focus:ring-4 border-gray-300 focus:border-gray-600 ring-gray-100"
+    />
+  </div>
+
+  <!-- Filtro per Secció -->
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">Secció</label>
+    <select
+      name="sectionId"
+      class="w-full px-4 py-3 border-2 rounded-md outline-none focus:ring-4 border-gray-300 focus:border-gray-600 ring-gray-100 bg-white"
+    >
+      <option value="">Totes les seccions</option>
+      <option value="1" selected={sectionId === "1"}>Aventura</option>
+      <option value="2" selected={sectionId === "2"}>Educació</option>
+      <!-- Aquesta llista hauria de venir d'una consulta a la teva base de dades -->
+    </select>
+  </div>
+
+  <!-- Botó d'aplicar -->
+  <div class="flex items-end">
+    <button
+      type="submit"
+      class="w-full px-4 py-3 bg-gray-800 text-white font-semibold rounded-md hover:bg-gray-700 transition"
+    >
+      Aplicar Filtres
+    </button>
+  </div>
+</form>

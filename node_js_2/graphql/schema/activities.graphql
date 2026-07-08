@@ -14,10 +14,8 @@ type Activity {
   secondaryImage: String
   slug: String!
   
-  # Relaciones
   author: User!
   section: Section!
-  tags: [Tag!]!
   participants: [User!]! # Lista de usuarios inscritos
 }
 
@@ -32,17 +30,40 @@ input CreateActivityInput {
   registrationEndDate: String
   mainImage: String
   secondaryImage: String
-  slug: String!
   sectionId: Int!
-  tagIds: [Int!]
+}
+
+input ActivityFilterInput {
+  title: String
+  sectionId: ID
+  authorId: ID
+  location: String
+  status: String
+}
+
+input SortInput {
+  field: String
+  direction: String # "ASC", "DESC"
+}
+
+type PaginatedActivities {
+  items: [Activity!]!
+  totalCount: Int!
 }
 
 extend type Query {
   getAllActivities: [Activity!]!
   getActivityBySlug(slug: String!): Activity
+  getFilteredActivities(
+    filter: ActivityFilterInput
+    sort: SortInput
+    page: Int
+    limit: Int
+  ): PaginatedActivities
 }
 
 extend type Mutation {
-  createActivity(input: CreateActivityInput!): Activity!
-  enrollInActivity(activityId: ID!): Boolean! # Para que el usuario logueado se apunte
+  createActivity(input: CreateActivityInput!): Activity
+  updateActivity(id: ID!, input: CreateActivityInput!): Activity
+  enrollInActivity(activityId: ID!): Boolean! 
 }

@@ -12,13 +12,12 @@ import CardActivity from "../components/ui/card_activity.astro";
 import { getHomeData } from "../services/homeService";
 
 // Obtenemos los datos del nuevo esquema
-const { getNewsFiltered, getAllActivities } = await getHomeData();
+const { news, activities } = await getHomeData();
 
-const allNews = getNewsFiltered.items;
+const allNews = news;
 
-const publishedActivities = getAllActivities
-  .filter((a: any) => a.status && new Date(a.activityDate) > new Date()) // Filtramos para mostrar actividades futuras
-  .sort((a: any, b: any) => new Date(a.activityDate).getTime() - new Date(b.activityDate).getTime());
+const allActivites = activities;
+
 ---
 
 <Layout title="Home">
@@ -46,7 +45,7 @@ const publishedActivities = getAllActivities
           Properes activitats
         </h2>
         <ul class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mx-auto">
-          {publishedActivities.map((activityEntry: any) => (
+          {allActivites.map((activityEntry: any) => (
             <CardActivity activityEntry={activityEntry} />
           ))}
         </ul>

@@ -33,7 +33,6 @@ input CreateSectionMainNewsInput {
   type: String
   mainImage: String
   secondaryImage: String
-  tagIds: [Int!]
 }
 
 input UpdateSectionMainNewsInput {
