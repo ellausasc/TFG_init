@@ -17,6 +17,7 @@ type User {
   birthDate: String
   createdAt: String!      # Antes join_date
   deletedAt: String       # Antes leave_date
+  profileImage: String
   roles: [Role!]!         # Ahora devuelve una lista de objetos Role
 }
 
@@ -36,7 +37,8 @@ input RegisterUserInput {
   email: String!
   password: String! 
   birthDate: String!
-  roles: [String!]        # Aquí puedes seguir recibiendo ["ADMIN"] desde el formulario
+  profileImage: String
+  roles: [String!]
 }
 
 input UpdateUserInput {
@@ -47,6 +49,7 @@ input UpdateUserInput {
   phone: String
   email: String
   birthDate: String
+  profileImage: String
 }
 
 extend type Query {

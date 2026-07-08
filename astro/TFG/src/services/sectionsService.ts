@@ -100,9 +100,6 @@ export async function createSection(input: any, token: string) {
   return result.data.createSection;
 }
 
-/**
- * Actualiza una sección existente (Requiere autenticación)
- */
 export async function updateSection(id: string, input: any, token: string) {
   const response = await fetch("http://localhost:4000/graphql", {
     method: "POST",

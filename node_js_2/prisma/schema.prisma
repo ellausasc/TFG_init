@@ -16,14 +16,15 @@ model User {
   code                 String      @unique
   firstName            String
   lastName1            String
-  lastName2            String?     // Opcional
+  lastName2            String?    
   dni                  String      @unique
-  phone                String?     // Opcional
+  phone                String?
   email                String      @unique
   password             String
   birthDate            DateTime?
   createdAt            DateTime    @default(now()) // data_alta
   deletedAt            DateTime?                   // data_baixa
+  profileImage         String?
   
   // Relacions
   roles                Role[]
@@ -139,4 +140,12 @@ model Activity {
   // Relacions M:N
   tags                  Tag[]
   participants          User[]    @relation("Enrollments")
+}
+
+model Documents {
+  id        Int      @id @default(autoincrement())
+  nombre    String   
+  url       String   
+  tipo      String
+  createdAt DateTime @default(now())
 }

@@ -1,14 +1,17 @@
 const express = require("express");
 const cors = require("cors");
+const multer = require("multer");
 const { ApolloServer } = require("@apollo/server");
 const { expressMiddleware } = require("@apollo/server/express4");
+
 const jwt = require('jsonwebtoken');
-
 const prisma = require("./db");
-
 const { schema } = require("./graphql");
+const minioRouter = require("./minio");
 
 const JWT_SECRET = process.env.JWT_SECRET || 'XX';
+
+const uplad = multer({ storage: multer.memoryStorage() });
 
 async function startServer() {
   const app = express();
@@ -16,6 +19,8 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+
+  app.use(minioRouter);
 
   const server = new ApolloServer({
     schema,

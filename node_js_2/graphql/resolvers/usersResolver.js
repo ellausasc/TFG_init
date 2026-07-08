@@ -58,6 +58,7 @@ const resolvers = {
           email: input.email,
           password: hashedPassword,
           birthDate: new Date(input.birthDate),
+          profileImage: input.profileImage,
           roles: input.roles ? { 
             connect: input.roles.map(rolName => ({ description: rolName })) 
           } : undefined,
@@ -112,6 +113,7 @@ const resolvers = {
         phone: input.phone,
         email: input.email,
         birthDate: input.birthDate ? new Date(input.birthDate) : undefined,
+        profileImage: input.profileImage,
       };
 
       // Eliminar campos no proporcionados (undefined) para no sobrescribir con null

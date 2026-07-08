@@ -1,10 +1,15 @@
+import { record } from "astro:schema";
+
 const GRAPHQL_ENDPOINT = "http://localhost:4000/graphql";
 
 // src/api.ts
-export async function fetchGraphQL<T>(query: string, variables = {}): Promise<T> {
+export async function fetchGraphQL<T>(query: string, variables = {}, headers: Record<string, string> = {}): Promise<T> {
   const response = await fetch(GRAPHQL_ENDPOINT, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      ...headers
+     },
     body: JSON.stringify({ query, variables }),
   });
 
