@@ -1,0 +1,25 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/ui/Container.astro";
+import SectionHead from "../../components/ui/SectionHead.astro";
+import LoginForm from "../../components/users/LoginForm.astro";
+
+if (Astro.cookies.has("token")) {
+  return Astro.redirect("/me");
+}
+---
+
+<Layout title="Iniciar sessió">
+  <Container>
+    <SectionHead>
+      <Fragment slot="title">Iniciar sessió</Fragment>
+      <Fragment slot="desc">
+        Accedeix al teu compte per gestionar les teves activitats i
+        inscripcions.
+      </Fragment>
+    </SectionHead>
+  </Container>
+  <Container class="pt-16">
+    <LoginForm />
+  </Container>
+</Layout>

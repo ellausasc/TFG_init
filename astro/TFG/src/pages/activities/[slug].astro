@@ -1,0 +1,201 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/ui/Container.astro";
+
+// Assegura't que la ruta sigui correcta segons el teu projecte
+import { getActivityBySlug } from "../../services/activitiesService";
+
+const { slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/404');
+}
+
+const activity = await getActivityBySlug(slug);
+
+if (!activity) {
+  return Astro.redirect('/404');
+}
+
+// Funció auxiliar per formatar les dates de manera més llegible
+const formatDate = (dateString: string) => {
+  if (!dateString) return null;
+  return new Date(dateString).toLocaleDateString("ca-ES", {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+const activityDate = formatDate(activity.activityDate);
+const regStart = formatDate(activity.registrationStartDate);
+const regEnd = formatDate(activity.registrationEndDate);
+
+const authorName = activity.author ? `${activity.author.firstName} ${activity.author.lastName1}` : 'Autor Desconegut';
+---
+
+<Layout title={activity.title}>
+  <Container>
+    
+    <!-- Graella principal: 1 columna a mòbil, 3 columnes a escriptori -->
+    <div class="mx-auto max-w-5xl mt-14 grid grid-cols-1 md:grid-cols-3 gap-x-10 gap-y-8">
+      
+      <!-- 1. CAPÇALERA (Títol). A escriptori ocupa les 2 columnes de la dreta -->
+      <div class="md:col-span-2 md:col-start-2 order-1">
+        <span class="text-blue-600 uppercase tracking-wider text-sm font-bold bg-blue-50 px-3 py-1 rounded-full">
+          {activity.section?.name || 'Secció'}
+        </span>
+        
+        <h1 class="text-4xl lg:text-5xl font-bold lg:tracking-tight mt-4 lg:leading-tight text-gray-900">
+          {activity.title}
+        </h1>
+        
+        <div class="flex gap-2 mt-4 items-center flex-wrap md:flex-nowrap text-sm text-gray-500 mb-2">
+          <span class="font-medium text-gray-700">👤 {authorName}</span>
+          <span>•</span>
+          <time datetime={new Date(activity.activityDate).toISOString()}>
+            📅 {activityDate}
+          </time>
+        </div>
+      </div>
+
+      <!-- 2. BARRA LATERAL (Detalls). A escriptori està a l'esquerra i s'expandeix cap avall -->
+      <div class="md:col-span-1 md:col-start-1 md:row-start-1 md:row-span-2 order-2">
+        <div class="bg-gray-50 border border-gray-100 rounded-2xl p-6 sticky top-8 shadow-sm">
+          <h3 class="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Detalls de l'Activitat</h3>
+          
+          <ul class="space-y-4 text-sm text-gray-700 mb-6">
+            {activity.type && (
+              <li>
+                <span class="block font-semibold text-gray-900">Tipus:</span>
+                {activity.type}
+              </li>
+            )}
+            
+            <li>
+              <span class="block font-semibold text-gray-900">Data de realització:</span>
+              <span class="capitalize">{activityDate}</span>
+            </li>
+            
+            {(regStart || regEnd) && (
+              <li class="bg-blue-50 p-3 rounded-lg border border-blue-100 mt-4">
+                <span class="block font-semibold text-blue-900 mb-1">Període d'inscripció:</span>
+                {regStart && <div class="text-blue-800">Inici: {regStart}</div>}
+                {regEnd && <div class="text-blue-800 mt-1">Fi: {regEnd}</div>}
+              </li>
+            )}
+          </ul>
+
+          <button 
+            id="enroll-btn" 
+            data-activity-id={activity.id}
+            class="w-full bg-gray-900 text-white font-semibold py-3 px-4 rounded-xl hover:bg-gray-800 transition-colors shadow-md flex justify-center items-center gap-2"
+          >
+            <span>Inscriure'm ara</span>
+          </button>
+          
+          <p id="enroll-message" class="text-sm font-medium text-center mt-3 hidden"></p>
+        </div>
+      </div>
+
+      <!-- 3. CONTINGUT PRINCIPAL (Imatge i text). A escriptori està sota el títol, a la dreta -->
+      <div class="md:col-span-2 md:col-start-2 order-3">
+        
+        {activity.mainImage && (
+          <img 
+            src={activity.mainImage} 
+            alt={`Imatge de l'activitat ${activity.title}`} 
+            class="w-full h-auto object-cover rounded-2xl shadow-sm max-h-[500px] mb-8"
+          />
+        )}
+
+        <div class="prose prose-lg prose-blue max-w-none">
+          <div class="text-xl font-medium text-gray-600 mb-8 leading-relaxed">
+            <Fragment set:html={activity.shortDescription} />
+          </div>
+          
+          <div class="text-gray-800">
+            <Fragment set:html={activity.longDescription} />
+          </div>
+        </div>
+      </div>
+
+    </div>
+    
+    <!-- Botó de tornar -->
+    <div class="text-center mt-16 mb-12">
+      <a
+        href="/activities"
+        class="inline-block bg-white border-2 border-gray-200 px-6 py-3 rounded-xl hover:border-gray-900 hover:bg-gray-50 transition font-medium text-gray-700"
+      >
+        ← Tornar a Activitats
+      </a>
+    </div>
+  </Container>
+</Layout>
+
+<script>
+  const enrollBtn = document.getElementById('enroll-btn') as HTMLButtonElement;
+  const enrollMessage = document.getElementById('enroll-message') as HTMLParagraphElement;
+
+  if (enrollBtn) {
+    enrollBtn.addEventListener('click', async () => {
+      const activityId = enrollBtn.getAttribute('data-activity-id');
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        enrollMessage.textContent = "Has d'iniciar sessió per inscriure't.";
+        enrollMessage.className = "text-sm font-medium text-center mt-3 text-red-600 block";
+        setTimeout(() => window.location.href = '/login', 2000);
+        return;
+      }
+
+      const originalText = enrollBtn.innerHTML;
+      enrollBtn.innerHTML = "Processant...";
+      enrollBtn.disabled = true;
+      enrollBtn.classList.add('opacity-75', 'cursor-not-allowed');
+
+      try {
+        const response = await fetch("http://localhost:4000/graphql", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            query: `
+              mutation EnrollInActivity($activityId: ID!) {
+                enrollInActivity(activityId: $activityId)
+              }
+            `,
+            variables: { activityId }
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.errors && result.errors.length > 0) {
+          throw new Error(result.errors[0].message);
+        }
+
+        if (result.data.enrollInActivity) {
+          enrollMessage.textContent = "Inscripció realitzada amb èxit! 🎉";
+          enrollMessage.className = "text-sm font-medium text-center mt-3 text-green-600 block";
+          enrollBtn.innerHTML = "Inscrit correctament";
+          enrollBtn.classList.replace('bg-gray-900', 'bg-green-600');
+          enrollBtn.classList.replace('hover:bg-gray-800', 'hover:bg-green-700');
+        }
+
+      } catch (error: any) {
+        enrollMessage.textContent = `Error: ${error.message}`;
+        enrollMessage.className = "text-sm font-medium text-center mt-3 text-red-600 block";
+        enrollBtn.innerHTML = originalText;
+        enrollBtn.disabled = false;
+        enrollBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+      }
+    });
+  }
+</script>

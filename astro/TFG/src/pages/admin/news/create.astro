@@ -1,9 +1,9 @@
 ---
 import Layout from "../../../layouts/Layout.astro";
-import Container from "../../../components/container.astro";
-import Sectionhead from "../../../components/sectionhead.astro";
-import Button from "../../../components/ui/button.astro";
-import NewsFields from "../../../components/forms/news_fields.astro";
+import Container from "../../../components/ui/Container.astro";
+import Sectionhead from "../../../components/ui/SectionHead.astro";
+import Button from "../../../components/ui/Button.astro";
+import NewsFields from "../../../components/news/NewsFields.astro";
 
 if (!Astro.cookies.has("token")) {
   return Astro.redirect("/login");
@@ -48,19 +48,14 @@ if (!Astro.cookies.has("token")) {
       sectionId: parseInt(formData.get("sectionId") as string),
       publishedAt: new Date(formData.get("publishedAt") as string).toISOString(),
       status: formData.get("isPublic") === "on" ? "PUBLISHED" : "DRAFT",
-      tagIds: (formData.get("tagIds") as string)
-        .split(',')
-        .map(id => parseInt(id.trim()))
-        .filter(id => !isNaN(id)),
     };
 
     const result = document.getElementById("news-result");
-    const token = localStorage.getItem("token") || "";
 
     try {
       result!.innerText = "Creant notícia...";
       result!.className = "font-medium mt-4 text-blue-600 block text-center";
-      await createNews(input, token);
+      await createNews(input);
       result!.innerText = "Notícia creada correctament!";
       result!.className = "font-medium mt-4 text-green-600 block text-center";
       form.reset();

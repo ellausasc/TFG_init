@@ -1,0 +1,38 @@
+---
+// src/pages/admin/roles/index.astro
+import Layout from "../../../layouts/Layout.astro";
+import Container from "../../../components/ui/Container.astro";
+import SectionHead from "../../../components/ui/SectionHead.astro";
+import PermissionsCard from "../../../components/roles/RoleCard.astro";
+import { getAllRolesWithPermissions } from "../../../services/rolesService";
+
+// 1. Obtenemos las cookies/token si es necesario para el fetch en SSR
+const token = Astro.cookies.get("token")?.value;
+const headers: Record<string, string> | undefined = token ? { Cookie: `token=${token}` } : undefined;
+
+// 2. Obtenemos los roles y sus permisos
+const roles = await getAllRolesWithPermissions(headers);
+---
+
+<Layout title="Administrar Roles i Permisos">
+  <Container>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+      <SectionHead 
+        title="Roles i Permisos" 
+        description="Gestiona l'accés dels usuaris als diferents mòduls del sistema." 
+      />
+      <a 
+        href="/admin/roles/create" 
+        class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800 transition-colors shadow-sm"
+      >
+        Crear Nou Rol
+      </a>
+    </div>
+
+    <div class="grid gap-8">
+      {roles.map((role: any) => (
+        <PermissionsCard role={role} />
+      ))}
+    </div>
+  </Container>
+</Layout>

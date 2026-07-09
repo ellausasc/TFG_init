@@ -1,20 +1,20 @@
 ---
 import Layout from "../../../layouts/Layout.astro";
-import Container from "../../../components/container.astro";
-import Sectionhead from "../../../components/sectionhead.astro";
-import Button from "../../../components/ui/button.astro";
-import SectionFields from "../../../components/forms/section_fields.astro";
-import NewsFields from "../../../components/forms/news_fields.astro";
+import Container from "../../../components/ui/Container.astro";
+import SectionHead from "../../../components/ui/SectionHead.astro";
+import Button from "../../../components/ui/Button.astro";
+import SectionFields from "../../../components/sections/SectionFields.astro";
+import NewsFields from "../../../components/news/NewsFields.astro";
 ---
 
 <Layout title="Crear Secció">
   <Container>
-    <Sectionhead>
+    <SectionHead>
       <Fragment slot="title">Crear nova secció</Fragment>
       <Fragment slot="desc">
         Crea una nova secció al portal amb la seva notícia principal.
       </Fragment>
-    </Sectionhead>
+    </SectionHead>
   </Container>
   
   <Container class="pb-24 mt-8">
@@ -29,7 +29,6 @@ import NewsFields from "../../../components/forms/news_fields.astro";
         showTitle={false} 
         showSection={false} 
         showDate={false} 
-        showTags={false} 
         showIsPublic={false}
       />
       
@@ -78,7 +77,7 @@ import NewsFields from "../../../components/forms/news_fields.astro";
       result!.innerText = "Creant secció";
       result!.className = "font-medium mt-4 text-blue-600 block text-center";
       
-      await createSection(input, token);
+      await createSection(input);
       
       result!.innerText = "Tot creat correctament!";
       result!.className = "font-medium mt-4 text-green-600 block text-center";

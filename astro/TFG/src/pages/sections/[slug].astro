@@ -2,8 +2,8 @@
 export const prerender = false;
 
 import Layout from "../../layouts/Layout.astro";
-import Container from "../../components/container.astro";
-import CardNews from "../../components/ui/card_news.astro";
+import Container from "../../components/ui/Container.astro";
+import CardNews from "../../components/news/NewsCard.astro";
 import { getSectionById } from "../../services/sectionsService";
 
 const { slug } = Astro.params;
