@@ -1,16 +1,15 @@
 ---
-// src/components/UserProfile.astro
+// src/components/user_profile.astro
 import Button from "./ui/button.astro";
 import UserFields from "./forms/user_fields.astro";
+
+const { user } = Astro.props;
 ---
 
-<form id="profile-form" class="max-w-md mx-auto" novalidate>
+<form id="profile-form" class="max-w-md mx-auto" data-user={JSON.stringify(user)} novalidate>
   <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">El teu perfil</h2>
 
-  <div id="loading" class="text-center text-gray-500 mb-5">Carregant dades...</div>
-
-  <div id="profile-content" class="hidden">
-    
+  <div id="profile-content">
     <UserFields isProfile={true} />
 
     <div class="flex items-center justify-center mb-5 mt-8">
@@ -22,96 +21,69 @@ import UserFields from "./forms/user_fields.astro";
 </form>
 
 <script>
-  import { getMe, updateMe } from "../services/userService";
+  import { updateMe } from "../services/userService";
   import { uploadGenericFile } from "../utils";
 
   const form = document.getElementById("profile-form") as HTMLFormElement;
-  const content = document.getElementById("profile-content");
-  const loading = document.getElementById("loading");
   const result = document.getElementById("profile-result");
 
-  async function init() {
-    if (!localStorage.getItem("token")) {
-      window.location.href = "/login";
-      return;
-    }
+  function hydrateForm() {
+    if (!form || !form.dataset.user) return;
     
-    try {
-      const user = await getMe();
-      
-      // Populate fields
-      Object.keys(user).forEach(key => {
-        // 🚨 Evitem l'error DOMException: el navegador no permet assignar valors a inputs tipus file
-        if (key === 'profileImage') return;
+    // Llegim l'usuari que ha vingut del servidor
+    const user = JSON.parse(form.dataset.user);
+    
+    // Omplim els camps automàticament
+    Object.keys(user).forEach(key => {
+      if (key === 'profileImage') return;
 
-        const input = form?.querySelector(`[name="${key}"]`) as HTMLInputElement;
-        if (input) {
-          if (key === 'birthDate' && user[key as keyof typeof user]) {
-            input.value = new Date(Number(user[key as keyof typeof user])).toISOString().split('T')[0];
-          } else {
-            // Re-activem aquesta línia perquè els valors es mostrin als inputs
-            input.value = (user[key as keyof typeof user] as string) || '';
-          }
+      const input = form.querySelector(`[name="${key}"]`) as HTMLInputElement;
+      if (input) {
+        if (key === 'birthDate' && user[key]) {
+          input.value = new Date(Number(user[key])).toISOString().split('T')[0];
+        } else {
+          input.value = (user[key] as string) || '';
         }
-      });
+      }
+    });
 
-      // Populate Image if it exists
-if (user.profileImage) {
-        const preview = document.getElementById('profile-picture-preview') as HTMLImageElement;
-        const placeholder = document.getElementById('profile-placeholder');
+    // Càrrega de la imatge
+    if (user.profileImage) {
+      const preview = document.getElementById('profile-picture-preview') as HTMLImageElement;
+      const placeholder = document.getElementById('profile-placeholder');
+      if (preview && placeholder) {
+        const pictureWrapper = preview.closest('picture');
+        if (pictureWrapper) pictureWrapper.querySelectorAll('source').forEach(s => s.remove());
         
-        if (preview && placeholder) {
-          
-          // 1. Destruïm els <source> generats per Astro (si existeixen)
-          const pictureWrapper = preview.closest('picture');
-          if (pictureWrapper) {
-            pictureWrapper.querySelectorAll('source').forEach(source => source.remove());
-          }
-          
-          // 2. CORRECCIÓ CLAU: Llevem el 'hidden' directament a la imatge
-          preview.classList.remove('hidden');
-          
-          // 3. CORRECCIÓ CLAU 2: Esborrem el 'srcset' perquè el navegador no l'ignori
-          preview.removeAttribute('srcset');
-          
-          // 4. Assignem la URL real de MinIO
-          preview.src = user.profileImage;
-          placeholder.classList.add('hidden');
-        }
-      }
-
-      if(loading && content) {
-        loading.classList.add("hidden");
-        content.classList.remove("hidden");
-      }
-    } catch (err) {
-      if(loading) {
-        loading.textContent = "Error carregant dades.";
-        loading.classList.add("text-red-500");
+        preview.classList.remove('hidden');
+        preview.removeAttribute('srcset');
+        preview.src = user.profileImage;
+        placeholder.classList.add('hidden');
       }
     }
   }
 
+  // Executem l'ompliment
+  hydrateForm();
+
+  // Gestió de l'enviament (Submit)
   if(form) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      form.classList.add("was-validated");
       if (!form.checkValidity()) return;
 
       const formData = new FormData(form);
-      
       if(result) {
         result.textContent = "Desant...";
         result.className = "text-center font-medium mt-3 text-blue-500 block";
+        result.classList.remove("hidden");
       }
 
       try {
         let profileImageUrl = undefined;
         const fileField = formData.get("profileImage") as File;
 
-        // Si l'usuari ha seleccionat una imatge nova, la pugem
         if (fileField && fileField.size > 0) {
-          if(result) result.innerHTML = "Actualitzant imatge...";
           profileImageUrl = await uploadGenericFile(fileField);
         }
 
@@ -123,9 +95,7 @@ if (user.profileImage) {
           birthDate: formData.get("birthDate"),
         };
 
-        if (profileImageUrl) {
-          updateData.profileImage = profileImageUrl;
-        }
+        if (profileImageUrl) updateData.profileImage = profileImageUrl;
 
         await updateMe(updateData);
         
@@ -142,7 +112,4 @@ if (user.profileImage) {
       }
     });
   }
-
-  // Executar a l'inici
-  init();
 </script>

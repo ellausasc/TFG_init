@@ -3,6 +3,10 @@ import Layout from "../layouts/Layout.astro";
 import Container from "../components/container.astro";
 import Sectionhead from "../components/sectionhead.astro";
 import LoginForm from "../components/login_form.astro";
+
+if (Astro.cookies.has("token")) {
+  return Astro.redirect("/me");
+}
 ---
 
 <Layout title="Iniciar sessió">
@@ -19,13 +23,3 @@ import LoginForm from "../components/login_form.astro";
     <LoginForm />
   </Container>
 </Layout>
-
-<script is:inline>
-  // Medida de seguridad: Si alguien intenta acceder a esta página sin haber
-  // iniciado sesión (sin token), lo redirigimos automáticamente al login.
-  if (typeof localStorage !== "undefined") {
-    if (localStorage.getItem("token")) {
-      window.location.href = "/me";
-    }
-  }
-</script>

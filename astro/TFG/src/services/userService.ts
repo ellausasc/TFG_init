@@ -70,21 +70,13 @@ const REGISTER_MUTATION = `
   }
 `;
 
-// Función auxiliar para inyectar el token en las peticiones privadas
-function getAuthHeaders() {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found. Please log in.");
-  
-  return { "Authorization": `Bearer ${token}` };
-}
-
-export async function getMe() {
-  const data = await fetchGraphQL<GetMeResponse>(ME_QUERY, {}, getAuthHeaders());
+export async function getMe(headers: Record<string, string> = {}) {
+  const data = await fetchGraphQL<GetMeResponse>(ME_QUERY, {}, headers);
   return data.me;
 }
 
-export async function updateMe(input: any) {
-  const data = await fetchGraphQL<UpdateUserResponse>(UPDATE_USER_MUTATION, { input }, getAuthHeaders());
+export async function updateMe(input: any, headers: Record<string, string> = {}) {
+  const data = await fetchGraphQL<UpdateUserResponse>(UPDATE_USER_MUTATION, { input }, headers);
   return data.updateUser;
 }
 

@@ -85,7 +85,6 @@ import Button from "./ui/button.astro";
 
     try {
       const { token, user } = await login(email, password);
-      localStorage.setItem("token", token);
 
       result.classList.replace("text-gray-600", "text-green-500");
       result.innerHTML = `Benvingut de nou, ${user.firstName}!`;

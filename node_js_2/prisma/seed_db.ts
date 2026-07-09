@@ -1,56 +1,156 @@
-require('dotenv').config();
 const prisma = require('../db.js');
-
-
-async function test() {
-  const res = await prisma.$queryRaw`SELECT current_user, current_database()`;
-  console.log("Conectado como:", res);
-}
+const bcrypt = require('bcrypt');
 
 async function main() {
-  console.log("Inicio carga datos");
+  console.log('Iniciando el proceso de seed...');
 
-   const newsData = [
-    { new_id: 1, title: "La primera", short_descr: "La primera noticia que s'ha fet mai, resum del que pot arribar a ser aixo...", sections: ["general", "global"], creation_date: new Date("2026-03-09"), publication_date: new Date("2026-03-09"), public: true, author: "Jhon", image_src: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?&fit=crop&w=430&h=240", image_alt: "frontend master", slug: "new1" },
-    { new_id: 2, title: "La primera", short_descr: "La primera noticia que s'ha fet mai, resum del que pot arribar a ser aixo...", sections: ["general", "global"], creation_date: new Date("2026-03-09"), publication_date: new Date("2026-03-09"), public: true, author: "Jhon", image_src: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?&fit=crop&w=430&h=240", image_alt: "frontend master", slug: "new2" },
-    { new_id: 3, title: "La primera", short_descr: "La primera noticia que s'ha fet mai, resum del que pot arribar a ser aixo...", sections: ["general", "global"], creation_date: new Date("2026-03-09"), publication_date: new Date("2026-03-09"), public: true, author: "Jhon", image_src: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?&fit=crop&w=430&h=240", image_alt: "frontend master", slug: "new3" },
-    { new_id: 4, title: "La primera", short_descr: "La primera noticia que s'ha fet mai, resum del que pot arribar a ser aixo...", sections: ["general", "global"], creation_date: new Date("2026-03-09"), publication_date: new Date("2026-03-09"), public: true, author: "Jhon", image_src: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?&fit=crop&w=430&h=240", image_alt: "frontend master", slug: "new4" },
-    { new_id: 5, title: "La primera", short_descr: "La primera noticia que s'ha fet mai, resum del que pot arribar a ser aixo...", sections: ["general", "global"], creation_date: new Date("2026-03-09"), publication_date: new Date("2026-03-09"), public: true, author: "Jhon", image_src: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?&fit=crop&w=430&h=240", image_alt: "frontend master", slug: "new5" }
-  ];
-
-  for (const n of newsData) {
-    await prisma.news.upsert({
-      where: { slug: n.slug }, // Evita duplicados
-      update: {},
-      create: n,
+  // ==========================================
+  // 0. ELIMINAR DATOS PREVIOS
+  // ==========================================
+  console.log('Limpiando la base de datos...');
+  await prisma.news.deleteMany();
+  await prisma.activity.deleteMany();
+  await prisma.section.deleteMany();
+  await prisma.rolePermission.deleteMany();
+  await prisma.action.deleteMany();
+  await prisma.module.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.role.deleteMany();
+  
+  // ==========================================
+  // 1. Añadir Módulos
+  // ==========================================
+  console.log('Creando módulos...');
+  const moduleNames = ['NEWS', 'ACTIVITIES', 'ROLES', 'USERS', 'SECTIONS', 'ASSEMBLY'];
+  const createdModules = [];
+  
+  for (const name of moduleNames) {
+    const mod = await prisma.module.create({
+      data: { name, description: `Módulo de ${name}` },
     });
+    createdModules.push(mod);
   }
-  console.log(`${newsData.length} Noticias insertadas.`);
 
-  const activitiesData = [
-    { activity_id: 1, title: "La primera", short_descr: "La primera noticia que s'ha fet mai, resum del que pot arribar a ser aixo...", sections: ["general", "global"], creation_date: new Date("2026-03-09"), publication_date: new Date("2026-03-09"), activity_date: new Date("2026-03-09"), begin_inscription_date: new Date("2026-03-09"), end_inscription_date: new Date("2026-03-09"), public: true, image_src: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?&fit=crop&w=430&h=240", image_alt: "frontend master", slug: "activity1" },
-    { activity_id: 2, title: "La segona", short_descr: "La primera noticia que s'ha fet mai, resum del que pot arribar a ser aixo...", sections: ["general", "global"], creation_date: new Date("2026-03-09"), publication_date: new Date("2026-03-09"), activity_date: new Date("2026-03-09"), begin_inscription_date: new Date("2026-03-09"), end_inscription_date: new Date("2026-03-09"), public: true, image_src: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?&fit=crop&w=430&h=240", image_alt: "frontend master", slug: "activity2" },
-    { activity_id: 3, title: "La tercera", short_descr: "La primera noticia que s'ha fet mai, resum del que pot arribar a ser aixo...", sections: ["general", "global"], creation_date: new Date("2026-03-09"), publication_date: new Date("2026-03-09"), activity_date: new Date("2026-03-09"), begin_inscription_date: new Date("2026-03-09"), end_inscription_date: new Date("2026-03-09"), public: true, image_src: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?&fit=crop&w=430&h=240", image_alt: "frontend master", slug: "activity3" },
-    { activity_id: 4, title: "La cuarta", short_descr: "La primera noticia que s'ha fet mai, resum del que pot arribar a ser aixo...", sections: ["general", "global"], creation_date: new Date("2026-03-09"), publication_date: new Date("2026-03-09"), activity_date: new Date("2026-03-09"), begin_inscription_date: new Date("2026-03-09"), end_inscription_date: new Date("2026-03-09"), public: true, image_src: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?&fit=crop&w=430&h=240", image_alt: "frontend master", slug: "activity4" },
-    { activity_id: 5, title: "La cinquena", short_descr: "La primera noticia que s'ha fet mai, resum del que pot arribar a ser aixo...", sections: ["general", "global"], creation_date: new Date("2026-03-09"), publication_date: new Date("2026-03-09"), activity_date: new Date("2026-03-09"), begin_inscription_date: new Date("2026-03-09"), end_inscription_date: new Date("2026-03-09"), public: true, image_src: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?&fit=crop&w=430&h=240", image_alt: "frontend master", slug: "activity5" }
+  // ==========================================
+  // 2. Añadir Acciones
+  // ==========================================
+  console.log('Creando acciones...');
+  const actionData = [
+    { action: '* ', description: 'all' },
+    { action: '01', description: 'create' },
+    { action: '02', description: 'update' },
+    { action: '03', description: 'read' },
+    { action: '04', description: 'delete' }
   ];
+  
+  const createdActions = [];
 
-  for (const a of activitiesData) {
-    await prisma.activity.upsert({
-      where: { slug: a.slug },
-      update: {},
-      create: a,
+  for (const item of actionData) {
+    const act = await prisma.action.create({
+      data: { action: item.action, description: item.description },
     });
+    createdActions.push(act);
   }
-  console.log(`${activitiesData.length} Actividades insertadas.`);
+
+  // ==========================================
+  // 3. Añadir Rol ADMIN y Asignar TODOS los Permisos
+  // ==========================================
+  console.log('Creando rol ADMIN...');
+  const adminRole = await prisma.role.create({
+    data: { description: 'ADMIN' },
+  });
+
+  const actionAll = createdActions.find(a => a.description === 'all');
+  if (actionAll) {
+    for (const mod of createdModules) {
+      await prisma.rolePermission.create({
+        data: {
+          roleId: adminRole.id,
+          moduleId: mod.id,
+          actionId: actionAll.id,
+          sectionId: null, // Global
+        },
+      });
+    }
+    console.log('✅ Permisos totales asignados al rol ADMIN.');
+  }
+
+  // ==========================================
+  // 4. Crear Sección por defecto
+  // ==========================================
+  console.log('Creando sección por defecto...');
+  const defaultSection = await prisma.section.create({
+    data: {
+      name: 'General',
+      description: 'Sección principal del sistema',
+      isActive: true,
+    }
+  });
+
+  // ==========================================
+  // 5. Añadir Usuario y ASIGNARLE EL ROL ADMIN
+  // ==========================================
+  console.log('Creando usuario admin@admin.com...');
+  const hashedPassword = await bcrypt.hash('admin', 10);
+
+  const adminUser = await prisma.user.create({
+    data: {
+      code: 'ADM-001',
+      firstName: 'Super',
+      lastName1: 'Admin',
+      dni: '00000000T',
+      email: 'admin@admin.com',
+      password: hashedPassword,
+      // AQUÍ SE ASIGNA EL ROL AL USUARIO
+      roles: {
+        connect: [{ id: adminRole.id }] // Usamos un array de objetos para relaciones n:m
+      }
+    }
+  });
+  console.log(`✅ Usuario creado y rol ADMIN asignado a ${adminUser.email}.`);
+
+  // ==========================================
+  // 6. Añadir Noticia de Prueba
+  // ==========================================
+  console.log('Creando noticia de prueba...');
+  await prisma.news.create({
+    data: {
+      title: '¡Bienvenido al nuevo sistema!',
+      shortDescription: 'El sistema ha sido inicializado correctamente.',
+      longDescription: 'Esta es una noticia de prueba generada automáticamente por la semilla de la base de datos.',
+      slug: 'bienvenido-al-nuevo-sistema',
+      status: 'PUBLISHED',
+      type: 'INFO',
+      authorId: adminUser.id,
+      sectionId: defaultSection.id,
+    }
+  });
+
+  // ==========================================
+  // 7. Añadir Actividad de Prueba
+  // ==========================================
+  console.log('Creando actividad de prueba...');
+  await prisma.activity.create({
+    data: {
+      title: 'Reunión de Inicialización',
+      shortDescription: 'Primera reunión técnica del portal.',
+      longDescription: 'Revisión general de módulos, roles y permisos cargados en el sistema.',
+      slug: 'reunion-inicializacion',
+      activityDate: new Date(new Date().setDate(new Date().getDate() + 7)),
+      status: true,
+      authorId: adminUser.id,
+      sectionId: defaultSection.id,
+    }
+  });
+
+  console.log('🎉 Seed finalizado con éxito.');
 }
 
 main()
   .catch((e) => {
-    console.error("Error al insertar datos:", e);
+    console.error("Error durante el seed:", e);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
-    console.log("Base de datos desconectada.");
   });

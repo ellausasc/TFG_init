@@ -71,18 +71,56 @@ const resolvers = {
       return { token, user: newUser };
     },
 
-    loginUser: async (_, { email, password }) => {
+    loginUser: async (_, { email, password }, context) => {
       const user = await prisma.user.findUnique({ 
         where: { email },
-        include: { roles: true } 
+        include: { roles: {
+          include: { permission: {
+            include: { module: true, action: true, section: true }
+          } }
+        }} 
       });
+
+      console.log("Cookie:", context.req.headers.cookie); // Debugging line
 
       if (!user) throw new Error("Credencials incorrectes."); 
 
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) throw new Error("Credencials incorrectes.");
 
-      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '30d' });
+      const permissionsSet = new Set(); // Usamos Set para evitar permisos duplicados si tiene varios roles
+
+      user.roles.forEach(role => {
+        role.permission.forEach(permission => {
+          const moduleName = permission.module.name;
+          const action = permission.action.action;
+          
+          // Formato base: "MODULO:ACCION"
+          let permString = `${moduleName}:${action}`;
+
+          // Si el permiso está atado a una sección concreta, añadimos el sectionId
+          if (permission.section) {
+            permString += `:${permission.section.id}`;
+          }
+
+          permissionsSet.add(permString);
+        });
+      });
+
+      const userPermissions = Array.from(permissionsSet);
+
+      console.log("User Permissions:", userPermissions); // Debugging line
+
+      const token = jwt.sign({ userId: user.id, userPermissions }, JWT_SECRET, { expiresIn: '7d' });
+
+      console.log("Generated Token:", token); // Debugging line
+
+      context.res.cookie('token', token, { 
+        httpOnly: true, 
+        path: '/', sameSite: 
+        'lax', 
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 días en ms
+      }); 
 
       return { token, user };
     },

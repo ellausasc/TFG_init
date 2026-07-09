@@ -4,6 +4,10 @@ import Container from "../../../components/container.astro";
 import Sectionhead from "../../../components/sectionhead.astro";
 import Button from "../../../components/ui/button.astro";
 import ActivityFields from "../../../components/forms/activities_fields.astro";
+
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/login");
+}
 ---
 
 <Layout title="Crear Activitat">
@@ -74,10 +78,4 @@ import ActivityFields from "../../../components/forms/activities_fields.astro";
       result!.className = "font-medium mt-4 text-red-600 block text-center";
     }
   });
-</script>
-
-<script is:inline>
-  if (typeof localStorage !== "undefined" && !localStorage.getItem("token")) {
-    window.location.href = "/login";
-  }
 </script>

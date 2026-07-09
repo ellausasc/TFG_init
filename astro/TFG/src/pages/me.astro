@@ -3,7 +3,26 @@
 import Layout from "../layouts/Layout.astro";
 import Container from "../components/container.astro";
 import Sectionhead from "../components/sectionhead.astro";
-import ProfileForm from "../components/user_profile.astro";
+import UserProfile from "../components/user_profile.astro";
+import { getMe } from "../services/userService";
+
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/login");
+}
+
+const token = Astro.cookies.get("token")?.value;
+const headers: Record<string, string> = token ? { "Cookie": `token=${token}` } 
+  : {};
+
+// 2. OBTENCIÓ DE DADES (SSR)
+let user = null;
+try {
+  user = await getMe(headers);
+} catch (error) {
+  // Si el token és invàlid (caducat o mal format), netegem la cookie
+  Astro.cookies.delete("token", { path: '/' });
+  return Astro.redirect("/login");
+}
 ---
 
 <Layout title="El meu Perfil">
@@ -17,9 +36,6 @@ import ProfileForm from "../components/user_profile.astro";
   </Container>
   
   <Container class="pt-16 pb-24">
-    <ProfileForm />
+    <UserProfile user={user} />
   </Container>
 </Layout>
-
-<script type="module">
-</script>

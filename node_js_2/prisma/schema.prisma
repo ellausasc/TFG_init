@@ -35,7 +35,7 @@ model User {
 
 model Role {
   id          Int    @id @default(autoincrement())
-  description String
+  description String @unique
 
   // Relacions
   users      User[]
@@ -44,7 +44,7 @@ model Role {
 
 model Module {
   id          Int     @id @default(autoincrement())
-  name        String
+  name        String  @unique
   description String?
 
   // Relacions
@@ -53,7 +53,8 @@ model Module {
 
 model Action {
   id          Int    @id @default(autoincrement())
-  description String
+  action      String @unique @db.Char(2)
+  description String @unique
 
   // Relacions
   permission RolePermission[]
@@ -61,7 +62,7 @@ model Action {
 
 model Section {
   id          Int       @id @default(autoincrement())
-  name        String
+  name        String    @unique
   description String?
   createdAt   DateTime  @default(now())
   publishedAt DateTime?

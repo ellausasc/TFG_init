@@ -2,12 +2,17 @@
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import icon from 'astro-icon';
+import node from '@astrojs/node';
 
 // https://astro.build/config
 export default defineConfig({
   vite: {
     plugins: [tailwindcss()]
   },
+  output: 'server',
+  adapter: node({
+    mode: 'standalone',
+  }),
   integrations: [icon()],
   image: {
     // Esborrem 'domains' i utilitzem només remotePatterns que és més precís

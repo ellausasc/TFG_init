@@ -3,18 +3,17 @@ import Dropdown from "./zdropdown.astro";
 import Container from "../container.astro";
 import { Astronav, MenuItems, MenuIcon } from "astro-navbar";
 import { getAllSections } from "../../services/sectionsService";
+import { jwtDecode } from "jwt-decode";
 
 // 1. Carregar seccions dinàmicament
 let sections = [];
 try {
   const allSections = await getAllSections();
-  // Filtrem només les actives
   sections = allSections.filter((s: any) => s.isActive === true);
 } catch (error) {
   console.error("Error carregant seccions:", error);
 }
 
-// 2. Mapejar les seccions per al menú
 const sectionChildren = sections.map((section: any) => ({
   title: section.name,
   path: `/sections/${section.id}` 
@@ -39,7 +38,8 @@ const guestItems = [
   { title: "Registrar-se", path: "/singup" },
 ];
 
-const userItems = [
+// Tots els ítems possibles
+const allUserItems = [
   { title: "El meu perfil", path: "/me" },
   { title: "Les meves activitats", path: "#" },
   { title: "Informació juntes", path: "#" },
@@ -48,8 +48,59 @@ const userItems = [
   { title: "Administrar juntes", path: "#" },
   { title: "Administrar usuaris", path: "#" },
   { title: "Administrar seccions", path: "/admin/sections" },
-  { title: "Tancar sessió", path: "#" },
+  // Ens assegurem que enviem a l'endpoint de logout que vam crear abans
+  { title: "Tancar sessió", path: "/logout" }, 
 ];
+
+
+
+const token = Astro.cookies.get("token")?.value;
+let userPerms: string[] = [];
+let isLoggedIn = !!token;
+
+// Decodifiquem el JWT per extreure els permisos sense cridar a l'API
+if (token) {
+  try {
+    const payload: any = jwtDecode(token);
+    userPerms = payload.userPermissions || [];
+  } catch (error) {
+    console.error("Error decodificant el token al menú:", error);
+    isLoggedIn = false;
+  }
+}
+
+// Mapa dels permisos requerits per cada element del menú
+const MENU_REQUIREMENTS: Record<string, string | null> = {
+  "El meu perfil": null,
+  "Les meves activitats": null,
+  "Informació juntes": null,
+  "Administrar noticies": "NEWS",
+  "Administrar activitats": "ACTIVITIES",
+  "Administrar juntes": "ASSEMBLY",
+  "Administrar usuaris": "USERS",
+  "Administrar seccions": "SECTIONS",
+  "Tancar sessió": null,
+};
+
+// Funció comprobadora
+function hasPermission(userPerms: string[], reqPerm: string | null): boolean {
+if (!reqPerm) return true; // Accés lliure per als elements que tenen 'null'
+
+  // Busquem si l'usuari té ALGUN permís que coincideixi amb el mòdul
+  return userPerms.some(perm => {
+    // Separem el permís de l'usuari per ":" i ens quedem només amb la posició 0 (el mòdul)
+    // Ex: de "NEWS:* " o "NEWS:01:5" ens quedarà només "NEWS"
+    const [userModule] = perm.split(":"); 
+    
+    // Comprovem si aquest mòdul és el que demana el menú
+    return userModule === reqPerm;
+  });
+}
+
+// Filtrem la llista deixant només els que l'usuari pot veure
+const allowedUserItems = allUserItems.filter(item => 
+  hasPermission(userPerms, MENU_REQUIREMENTS[item.title])
+);
 ---
 
 <Container class="sticky top-0 bg-white z-50">
@@ -82,62 +133,18 @@ const userItems = [
             ))
           }
 
-          {/* 1. ÀREA PRIVADA (ESTAT: INVITAT) */}
-          <div id="guest-menu" class="auth-menu">
-            <Dropdown title="Àrea privada" children={guestItems} lastItem={true} />
-          </div>
-
-          {/* 2. ÀREA PRIVADA (ESTAT: LOGUEJAT) */}
-          <div id="user-menu" class="auth-menu">
-            <Dropdown title="Àrea privada" children={userItems} lastItem={true} />
-          </div>
+          {/* RENDERITZAT CONDICIONAL: Depèn directament del servidor! */}
+          {!isLoggedIn ? (
+            <div id="guest-menu">
+              <Dropdown title="Àrea privada" children={guestItems} lastItem={true} />
+            </div>
+          ) : (
+            <div id="user-menu">
+              <Dropdown title="Àrea privada" children={allowedUserItems} lastItem={true} />
+            </div>
+          )}
         </ul>
       </MenuItems>
     </Astronav>
   </header>
 </Container>
-
-<style is:global>
-  .auth-menu {
-    display: none !important;
-  }
-  html:not(.is-logged-in) #guest-menu {
-    display: block !important;
-  }
-  html.is-logged-in #user-menu {
-    display: block !important;
-  }
-</style>
-
-<script is:inline>
-  function checkAuth() {
-    if (typeof localStorage !== "undefined") {
-      const token = localStorage.getItem("token");
-      if (token) {
-        document.documentElement.classList.add("is-logged-in");
-      } else {
-        document.documentElement.classList.remove("is-logged-in");
-      }
-    }
-  }
-
-  checkAuth();
-  document.addEventListener("astro:after-swap", checkAuth);
-</script>
-
-<script>
-  function setupLogoutListener() {
-    document.addEventListener("click", (e) => {
-      const target = e.target instanceof HTMLElement ? e.target : null;
-      if (target && target.textContent?.trim() === "Tancar sessió") {
-        e.preventDefault();
-        localStorage.removeItem("token");
-        document.documentElement.classList.remove("is-logged-in");
-        window.location.href = "/";
-      }
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", setupLogoutListener);
-  document.addEventListener("astro:page-load", setupLogoutListener);
-</script>

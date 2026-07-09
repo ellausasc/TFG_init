@@ -3,7 +3,7 @@ const { slugify } = require("./utils");
 
 const getAll = async () => {
   return await prisma.section.findMany({
-    include: { mainNews: true, news: true, activities: true, roles: true },
+    include: { mainNews: true, news: true, activities: true },
     orderBy: { createdAt: 'desc' }
   });
 };
@@ -11,7 +11,7 @@ const getAll = async () => {
 const getById = async (id) => {
   return await prisma.section.findUnique({
     where: { id: parseInt(id) },
-    include: { mainNews: true, news: true, activities: true, roles: true }
+    include: { mainNews: true, news: true, activities: true }
   });
 };
 
@@ -75,8 +75,7 @@ const create = async (input, userId) => {
       include: {
         mainNews: true,
         news: true,
-        activities: true,
-        roles: true
+        activities: true
       }
     });
   });
@@ -120,7 +119,7 @@ const update = async (id, input, userId) => {
   return await prisma.section.update({
     where: { id: parseInt(id) },
     data: dataToUpdate,
-    include: { mainNews: true, news: true, activities: true, roles: true }
+    include: { mainNews: true, news: true, activities: true  }
   });
 };
 
