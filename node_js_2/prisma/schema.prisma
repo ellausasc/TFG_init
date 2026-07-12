@@ -11,26 +11,41 @@ datasource db {
   provider = "postgresql"
 }
 
+enum ActivityType {
+  GENERAL
+  ASSEMBLEA
+  JUNTA
+}
+
+enum DocumentRole {
+  PROFILE_IMAGE
+  MAIN_IMAGE
+  SECONDARY_IMAGE
+  ATTACHMENT
+}
+
 model User {
-  id           Int       @id @default(autoincrement())
-  code         String    @unique
-  firstName    String
-  lastName1    String
-  lastName2    String?
-  dni          String    @unique
-  phone        String?
-  email        String    @unique
-  password     String
-  birthDate    DateTime?
-  createdAt    DateTime  @default(now()) // data_alta
-  deletedAt    DateTime? // data_baixa
-  profileImage String?
+  id        Int       @id @default(autoincrement())
+  code      String    @unique
+  firstName String
+  lastName1 String
+  lastName2 String?
+  dni       String    @unique
+  phone     String?
+  email     String    @unique
+  password  String
+  birthDate DateTime?
+  createdAt DateTime  @default(now()) // data_alta
+  deletedAt DateTime? // data_baixa
 
   // Relacions
   roles              Role[]
   createdNews        News[]     @relation("AuthorNews")
   createdActivities  Activity[] @relation("AuthorActivity")
   enrolledActivities Activity[] @relation("Enrollments")
+
+  // Relació 1:1 amb el document que fa de foto de perfil
+  profileDocument Documents?
 }
 
 model Role {
@@ -106,8 +121,6 @@ model News {
   publishedAt      DateTime?
   status           String?
   type             String?
-  mainImage        String?
-  secondaryImage   String?
   slug             String    @unique
 
   // Relacions N:1
@@ -119,23 +132,25 @@ model News {
   // Relació 1:1
   mainPageOfId Int?
   mainPageOf   Section? @relation("MainNews")
+
+  // Relacions 1:N (imatges principal/secundària via Documents.role)
+  documents Documents[]
 }
 
 model Activity {
-  id                    Int       @id @default(autoincrement())
+  id                    Int          @id @default(autoincrement())
   title                 String
   shortDescription      String
   longDescription       String
-  createdAt             DateTime  @default(now())
+  createdAt             DateTime     @default(now())
   publishedAt           DateTime?
-  status                Boolean   @default(false)
-  type                  String?
+  status                Boolean      @default(false)
+  type                  ActivityType @default(GENERAL)
+  isPrivate             Boolean      @default(false)
   activityDate          DateTime
   registrationStartDate DateTime?
   registrationEndDate   DateTime?
-  mainImage             String?
-  secondaryImage        String?
-  slug                  String    @unique
+  slug                  String       @unique
 
   // Relacions N:1
   authorId  Int
@@ -143,14 +158,28 @@ model Activity {
   sectionId Int
   section   Section @relation(fields: [sectionId], references: [id])
 
+  // Relacions 1:N (imatges + adjunts, incloent-hi les juntes via type=JUNTA)
+  documents Documents[]
+
   // Relacions M:N
   participants User[] @relation("Enrollments")
 }
 
 model Documents {
-  id        Int      @id @default(autoincrement())
+  id        Int          @id @default(autoincrement())
   nombre    String
   url       String
   tipo      String
-  createdAt DateTime @default(now())
+  role      DocumentRole @default(ATTACHMENT)
+  createdAt DateTime     @default(now())
+
+  // Com a màxim UN dels tres camps següents ha d'estar informat
+  userId Int?  @unique
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  newsId Int?
+  news   News? @relation(fields: [newsId], references: [id], onDelete: Cascade)
+
+  activityId Int?
+  activity   Activity? @relation(fields: [activityId], references: [id], onDelete: Cascade)
 }

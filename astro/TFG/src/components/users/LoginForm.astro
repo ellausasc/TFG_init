@@ -58,7 +58,7 @@ import Button from "../ui/Button.astro";
 </style>
 
 <script type="module">
-  import { login } from "/src/services/userService.js";
+  import { loginUser } from "/src/services/usersService.js";
 
   const form = document.getElementById("form");
   const result = document.getElementById("result");
@@ -66,11 +66,11 @@ import Button from "../ui/Button.astro";
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
     
-    // Al añadir esta clase, activamos el CSS que muestra los errores
+    // En afegir aquesta classe, activem el CSS que mostra els errors
     form.classList.add("was-validated");
     
     if (!form.checkValidity()) {
-      // Enfocamos el primer campo erróneo
+      // Enfoquem el primer camp erroni
       form.querySelectorAll(":invalid")[0].focus();
       return;
     }
@@ -84,7 +84,7 @@ import Button from "../ui/Button.astro";
     result.classList.add("text-gray-600", "block");
 
     try {
-      const { token, user } = await login(email, password);
+      const { token, user } = await loginUser(email, password);
 
       result.classList.replace("text-gray-600", "text-green-500");
       result.innerHTML = `Benvingut de nou, ${user.firstName}!`;

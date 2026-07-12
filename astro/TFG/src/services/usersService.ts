@@ -12,7 +12,7 @@ export async function updateMe(input: UpdateUserInput, headers: Record<string, s
   return data.updateUser;
 }
 
-export async function login(email: string, password: string): Promise<AuthPayload> {
+export async function loginUser(email: string, password: string): Promise<AuthPayload> {
   const data = await fetchGraphQL<{ loginUser: AuthPayload }>(
     LOGIN_MUTATION, 
     { email, password }

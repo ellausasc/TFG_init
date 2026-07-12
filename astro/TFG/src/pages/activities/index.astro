@@ -9,12 +9,12 @@ import { getActivities } from "../../services/activitiesService";
 
 export const prerender = false;
 
-// 1. Extraemos los parámetros de la URL
+// 1. Extraiem els parametres de la URL
 const page = parseInt(Astro.url.searchParams.get("page") || "1");
   const title = Astro.url.searchParams.get("title");
   const sectionId = Astro.url.searchParams.get("sectionId");
 
-  // 2. Construimos el filtro
+  // 2. Construim el filtre
 const filter: any = {};
 if (title) filter.title = title;
 if (sectionId) filter.sectionId = parseInt(sectionId);
@@ -26,7 +26,7 @@ const { items: publishedActivities } = await getActivities({
   filter,
 });
 
-// Helper para construir URLs manteniendo filtros actuales
+// Helper per construir URLs mantenint els filtres actuals
 const getPaginationUrl = (newPage: number) => {
   const params = new URLSearchParams(Astro.url.searchParams);
   params.set("page", newPage.toString());

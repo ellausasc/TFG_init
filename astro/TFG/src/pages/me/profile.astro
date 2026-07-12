@@ -4,7 +4,7 @@ import Layout from "../../layouts/Layout.astro";
 import Container from "../../components/ui/Container.astro";
 import SectionHead from "../../components/ui/SectionHead.astro";
 import UserProfile from "../../components/users/UserProfile.astro";
-import { getMe } from "../../services/userService";
+import { getMe } from "../../services/usersService";
 
 if (!Astro.cookies.has("token")) {
   return Astro.redirect("/login");

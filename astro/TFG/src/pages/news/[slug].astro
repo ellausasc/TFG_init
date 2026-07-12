@@ -35,7 +35,7 @@ const authorFullName = news.author ? `${news.author.firstName} ${news.author.las
       />
     )}
 
-    {/* Contenedor de texto - Sin mx-auto para que quede a la izquierda */}
+    {/* Contenidor de text - sense mx-auto perque quedi a l'esquerra */}
     <div class="max-w-3xl mt-14">
       {news.section && (
         <span class="text-blue-400 uppercase tracking-wider text-sm font-medium">
@@ -51,17 +51,6 @@ const authorFullName = news.author ? `${news.author.firstName} ${news.author.las
         <span class="text-gray-400">{authorFullName}</span>
         <span class="text-gray-400">•</span>
         <time class="text-gray-400" datetime={isoDate}>{displayDate}</time>
-        
-        {news.tags && news.tags.length > 0 && (
-          <>
-            <span class="text-gray-400 hidden md:block">•</span>
-            <div class="flex flex-wrap gap-3">
-              {news.tags.map((tag: any) => (
-                <span class="text-sm text-gray-500">#{tag.description}</span>
-              ))}
-            </div>
-          </>
-        )}
       </div>
     </div>
 

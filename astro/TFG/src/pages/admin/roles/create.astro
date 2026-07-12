@@ -45,17 +45,17 @@ const { modules, actions, sections } = await getRoleFormData(headers);
   const form = document.getElementById("role-form");
 
   if (form) {
-    // Escuchamos el evento personalizado emitido por el componente RoleForm
+    // Escoltem l'esdeveniment personalitzat emes pel component RoleForm
     form.addEventListener("role-form-submit", async (e: any) => {
-      // Extraemos los datos y las funciones de control visual
+      // Extraiem les dades i les funcions de control visual
       const { description, permissions, showError, resetButton } = e.detail;
 
       try {
-        // PASO 1: Crear el Rol
+        // PAS 1: Crear el Rol
         const newRole = await createRole(description);
         const roleId = newRole.id;
 
-        // PASO 2: Añadir los permisos al nuevo rol
+        // PAS 2: Afegir els permisos al nou rol
         if (permissions.length > 0) {
           const permissionPromises = permissions.map((p: any) => {
             return addPermissionToRole({
@@ -72,7 +72,7 @@ const { modules, actions, sections } = await getRoleFormData(headers);
         window.location.href = "/admin/roles";
         
       } catch (err: any) {
-        // Si hay error en la API, le decimos al componente que lo muestre
+        // Si hi ha error a l'API, li diem al component que el mostri
         showError(err.message);
         resetButton();
         

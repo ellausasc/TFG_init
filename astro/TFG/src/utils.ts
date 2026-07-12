@@ -1,16 +1,16 @@
-// src/utils.ts (o src/utils/index.ts)
+// src/utils.ts
 
 const REST_UPLOAD_URL = "http://localhost:4000/upload"; // Endpoint de MinIO
 
 /**
- * Sube un archivo genérico al servidor (MinIO) vía REST
- * @param file El archivo binario a subir (File)
- * @returns La URI relativa del archivo guardado en la base de datos
+ * Puja un arxiu generic al servidor (MinIO) via REST
+ * @param file L'arxiu binari a pujar (File)
+ * @returns La URI relativa de l'arxiu desat a la base de dades
  */
 export async function uploadGenericFile(file: File): Promise<string> {
   const formData = new FormData();
-  // El nombre "archivo" debe coincidir con lo que espera multer en el backend: upload.single("archivo")
-  formData.append("archivo", file);
+  // El nom "file" ha de coincidir amb el que espera multer al backend: upload.single("file")
+  formData.append("file", file);
 
   const response = await fetch(REST_UPLOAD_URL, {
     method: "POST",
@@ -23,6 +23,6 @@ export async function uploadGenericFile(file: File): Promise<string> {
     throw new Error(result.error || "Error pujant l'arxiu al servidor.");
   }
 
-  // Devolvemos la URI relativa generada
-  return result.documento.url; 
+  // Retornem la URI relativa generada
+  return result.document.url;
 }

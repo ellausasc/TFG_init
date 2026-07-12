@@ -66,13 +66,13 @@ if (!section) return Astro.redirect('/404');
 <script>
   import { updateSection } from "../../../../services/sectionsService";
 
-  const form = document.getElementById("master-form") as HTMLFormElement;
+  const form = document.getElementById("master-form") as HTMLFormElement | null;
   // Obtenim l'ID de l'URL per la mutació
   const id = window.location.pathname.split('/').pop() || "";
   
-  form.addEventListener("submit", async (e) => {
+  form?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const formData = new FormData(form);
+    const formData = new FormData(form as HTMLFormElement);
     
     const shortDesc = document.getElementById("newsShort") as HTMLInputElement;
     const longDesc = document.getElementById("newsLong") as HTMLInputElement;

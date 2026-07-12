@@ -6,11 +6,11 @@ import SectionHead from "../../../components/ui/SectionHead.astro";
 import PermissionsCard from "../../../components/roles/RoleCard.astro";
 import { getAllRolesWithPermissions } from "../../../services/rolesService";
 
-// 1. Obtenemos las cookies/token si es necesario para el fetch en SSR
+// 1. Obtenim les galetes/token si cal per a la peticio SSR
 const token = Astro.cookies.get("token")?.value;
 const headers: Record<string, string> | undefined = token ? { Cookie: `token=${token}` } : undefined;
 
-// 2. Obtenemos los roles y sus permisos
+// 2. Obtenim els rols i els seus permisos
 const roles = await getAllRolesWithPermissions(headers);
 ---
 

@@ -5,19 +5,20 @@ import {
   CREATE_SECTION_MUTATION, 
   UPDATE_SECTION_MUTATION 
 } from "./graphql/sections.queries";
+import type { Section, CreateSectionInput, UpdateSectionInput } from "../types";
 
-export async function getAllSections() {
-  const data = await fetchGraphQL<{ getAllSections: any[] }>(GET_ALL_SECTIONS_QUERY);
+export async function getAllSections(): Promise<Section[]> {
+  const data = await fetchGraphQL<{ getAllSections: Section[] }>(GET_ALL_SECTIONS_QUERY);
   return data?.getAllSections || [];
 }
 
-export async function getSectionById(id: string) {
-  const data = await fetchGraphQL<{ getSectionById: any }>(GET_SECTION_BY_ID_QUERY, { id });
+export async function getSectionById(id: string): Promise<Section | null> {
+  const data = await fetchGraphQL<{ getSectionById: Section }>(GET_SECTION_BY_ID_QUERY, { id });
   return data?.getSectionById;
 }
 
-export async function createSection(input: any, headers: Record<string, string> = {}) {
-  const data = await fetchGraphQL<{ createSection: any }>(
+export async function createSection(input: CreateSectionInput, headers: Record<string, string> = {}): Promise<Section> {
+  const data = await fetchGraphQL<{ createSection: Section }>(
     CREATE_SECTION_MUTATION,
     { input },
     headers
@@ -25,8 +26,8 @@ export async function createSection(input: any, headers: Record<string, string> 
   return data.createSection;
 }
 
-export async function updateSection(id: string, input: any, headers: Record<string, string> = {}) {
-  const data = await fetchGraphQL<{ updateSection: any }>(
+export async function updateSection(id: string, input: UpdateSectionInput, headers: Record<string, string> = {}): Promise<Section> {
+  const data = await fetchGraphQL<{ updateSection: Section }>(
     UPDATE_SECTION_MUTATION,
     { id, input },
     headers

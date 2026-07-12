@@ -1,150 +1,57 @@
-const prisma = require("../config/db");
+const rolesRepository = require("../repositories/rolesRepository");
+const usersRepository = require("../repositories/usersRepository"); // Reutilizamos el repo de usuarios!
 
-const getAllRoles = async () => {
-  return await prisma.role.findMany({
-    include: {
-      users: true,
-      permission: {
-        include: { module: true, action: true, section: true }
-      }
-    }
-  });
-};
-
-const getRoleById = async (id) => {
-  return await prisma.role.findUnique({
-    where: { id: parseInt(id) },
-    include: {
-      users: true,
-      permission: {
-        include: { module: true, action: true, section: true }
-      }
-    }
-  });
-};
+const getAllRoles = async () => await rolesRepository.findAllRoles();
+const getRoleById = async (id) => await rolesRepository.findRoleById(parseInt(id, 10));
 
 const getUserRoles = async (userId) => {
-  const user = await prisma.user.findUnique({
-    where: { id: parseInt(userId) },
-    include: {
-      roles: {
-        include: {
-          permission: {
-            include: { module: true, action: true, section: true }
-          }
-        }
-      }
-    }
-  });
-  
+  const user = await usersRepository.findById(parseInt(userId, 10));
   if (!user) throw new Error("Usuari no trobat");
   return user.roles;
 };
 
-const getAllModules = async () => {
-  return await prisma.module.findMany();
-};
+const getAllModules = async () => await rolesRepository.findAllModules();
+const getAllActions = async () => await rolesRepository.findAllActions();
 
-const getAllActions = async () => {
-  return await prisma.action.findMany();
-};
-
-// ==========================================
-// MUTACIONES (Gestión de Roles)
-// ==========================================
-
-const createRole = async (input) => {
-  return await prisma.role.create({
-    data: { description: input.description },
-    include: { users: true, permission: true }
-  });
-};
-
-const updateRole = async (id, input) => {
-  return await prisma.role.update({
-    where: { id: parseInt(id) },
-    data: { description: input.description },
-    include: { users: true, permission: true }
-  });
-};
-
+const createRole = async (input) => await rolesRepository.createRole({ description: input.description });
+const updateRole = async (id, input) => await rolesRepository.updateRole(parseInt(id, 10), { description: input.description });
 const deleteRole = async (id) => {
-  await prisma.role.delete({
-    where: { id: parseInt(id) }
-  });
+  await rolesRepository.deleteRole(parseInt(id, 10));
   return true;
 };
 
-// ==========================================
-// MUTACIONES (Asignación de Usuarios)
-// ==========================================
-
 const assignRoleToUser = async (userId, roleId) => {
-  await prisma.user.update({
-    where: { id: parseInt(userId) },
-    data: {
-      roles: { connect: { id: parseInt(roleId) } }
-    }
-  });
+  await rolesRepository.assignRoleToUser(parseInt(userId, 10), parseInt(roleId, 10));
   return true;
 };
 
 const removeRoleFromUser = async (userId, roleId) => {
-  await prisma.user.update({
-    where: { id: parseInt(userId) },
-    data: {
-      roles: { disconnect: { id: parseInt(roleId) } }
-    }
-  });
+  await rolesRepository.removeRoleFromUser(parseInt(userId, 10), parseInt(roleId, 10));
   return true;
 };
 
-// ==========================================
-// MUTACIONES (Gestión de Permisos)
-// ==========================================
-
 const addPermissionToRole = async (input) => {
   try {
-    return await prisma.rolePermission.create({
-      data: {
-        role: { connect: { id: parseInt(input.roleId) } },
-        module: { connect: { id: parseInt(input.moduleId) } },
-        action: { connect: { id: parseInt(input.actionId) } },
-        section: input.sectionId ? { connect: { id: parseInt(input.sectionId) } } : undefined
-      },
-      include: {
-        role: true,
-        module: true,
-        action: true,
-        section: true
-      }
-    });
+    const dataToCreate = {
+      role: { connect: { id: parseInt(input.roleId, 10) } },
+      module: { connect: { id: parseInt(input.moduleId, 10) } },
+      action: { connect: { id: parseInt(input.actionId, 10) } },
+      section: input.sectionId ? { connect: { id: parseInt(input.sectionId, 10) } } : undefined
+    };
+    return await rolesRepository.addPermissionToRole(dataToCreate);
   } catch (error) {
-    if (error.code === 'P2002') {
-      throw new Error("Aquest permís ja està assignat a aquest rol.");
-    }
+    if (error.code === 'P2002') throw new Error("Aquest permís ja està assignat a aquest rol.");
     throw error;
   }
 };
 
 const removePermissionFromRole = async (permissionId) => {
-  await prisma.rolePermission.delete({
-    where: { id: parseInt(permissionId) }
-  });
+  await rolesRepository.removePermissionFromRole(parseInt(permissionId, 10));
   return true;
 };
 
 module.exports = {
-  getAllRoles,
-  getRoleById,
-  getUserRoles,
-  getAllModules,
-  getAllActions,
-  createRole,
-  updateRole,
-  deleteRole,
-  assignRoleToUser,
-  removeRoleFromUser,
-  addPermissionToRole,
-  removePermissionFromRole
+  getAllRoles, getRoleById, getUserRoles, getAllModules, getAllActions,
+  createRole, updateRole, deleteRole, assignRoleToUser, removeRoleFromUser,
+  addPermissionToRole, removePermissionFromRole
 };

@@ -8,13 +8,13 @@ export interface Props {
   isEdit?: boolean;
   initialData?: {
     description: string;
-    permissions: any[]; // Permisos existentes formateados para la tabla
+    permissions: any[]; // Permisos existents formatejats per a la taula
   };
 }
 
 const { modules, actions, sections, isEdit = false, initialData } = Astro.props;
 
-// Convertimos los permisos iniciales a JSON para pasarlos al script del cliente
+// Convertim els permisos inicials a JSON per passar-los a l'script del client
 const initialPermissionsJson = initialData?.permissions ? JSON.stringify(initialData.permissions) : "[]";
 ---
 

@@ -26,7 +26,8 @@ import UserFields from "../users/UserFields.astro";
 </form>
 
 <script>
-  import { registerUser } from "../../services/userService";
+  import { registerUser } from "../../services/usersService";
+  import type { RegisterUserInput } from "../../types/index";
   import { uploadGenericFile } from "../../utils"; 
 
   const form = document.getElementById("register-form") as HTMLFormElement;
@@ -68,15 +69,15 @@ import UserFields from "../users/UserFields.astro";
           profileImageUrl = await uploadGenericFile(fileField);
         }
 
-        const mutationInput: Record<string, any> = {
-          firstName: formData.get("firstName"),
-          lastName1: formData.get("lastName1"),
-          lastName2: formData.get("lastName2") || undefined,
-          dni: formData.get("dni"),
-          phone: formData.get("phone") || undefined,
-          email: formData.get("email"),
+        const mutationInput: RegisterUserInput = {
+          firstName: String(formData.get("firstName") || ""),
+          lastName1: String(formData.get("lastName1") || ""),
+          lastName2: (formData.get("lastName2") ? String(formData.get("lastName2")) : undefined),
+          dni: String(formData.get("dni") || ""),
+          phone: (formData.get("phone") ? String(formData.get("phone")) : undefined),
+          email: String(formData.get("email") || ""),
           password: password,
-          birthDate: formData.get("birthDate"),
+          birthDate: String(formData.get("birthDate") || ""),
           profileImage: profileImageUrl,
         };
 

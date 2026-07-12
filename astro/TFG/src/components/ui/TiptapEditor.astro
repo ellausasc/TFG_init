@@ -65,7 +65,7 @@ const { name, label, id, required = false, initialValue = "" } = Astro.props;
       const hiddenInput = wrapper.querySelector(`input[name="${name}"]`) as HTMLInputElement;
       const errorMsg = wrapper.querySelector('.rich-text-error');
 
-      // Función auxiliar para iluminar/oscurecer los botones
+      // Funcio auxiliar per il·luminar/enfosquir els botons
       const updateButtonStates = (editor: Editor) => {
         const toggleBtn = (selector: string, format: string) => {
           const btn = wrapper.querySelector(selector);
@@ -74,7 +74,7 @@ const { name, label, id, required = false, initialValue = "" } = Astro.props;
             // Si está activo, ponemos fondo gris oscuro. Si no, fondo blanco normal.
             btn.classList.toggle('bg-gray-300', isActive);
             btn.classList.toggle('bg-white', !isActive);
-            // Opcional: hacemos el borde un poco más oscuro también
+            // Opcional: fem la vora una mica mes fosca tambe
             btn.classList.toggle('border-gray-400', isActive);
             btn.classList.toggle('border-gray-300', !isActive);
           }
@@ -101,7 +101,7 @@ const { name, label, id, required = false, initialValue = "" } = Astro.props;
             errorMsg.classList.add('hidden');
           }
         },
-        // NUEVO: onTransaction se ejecuta cada vez que el cursor se mueve o el texto cambia
+        // NOU: onTransaction s'executa cada vegada que el cursor es mou o el text canvia
         onTransaction: ({ editor }) => {
           updateButtonStates(editor);
         }
@@ -117,7 +117,7 @@ const { name, label, id, required = false, initialValue = "" } = Astro.props;
       wrapper.querySelector('.btn-undo')?.addEventListener('click', (e: Event) => { e.preventDefault(); editor.chain().focus().undo().run(); });
       wrapper.querySelector('.btn-redo')?.addEventListener('click', (e: Event) => { e.preventDefault(); editor.chain().focus().redo().run(); });
 
-      // Sincronizar el estado de los botones al cargar por si el HTML inyectado ya tiene formatos
+      // Sincronitzem l'estat dels botons en carregar per si l'HTML injectat ja te formats
       updateButtonStates(editor);
 
       wrapper._tiptapEditor = editor;

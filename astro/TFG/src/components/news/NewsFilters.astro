@@ -1,6 +1,6 @@
 ---
 // src/components/FilterNews.astro
-// Recibimos los valores actuales para que el formulario "recuerde" lo que el usuario escribió
+// Rebem els valors actuals perque el formulari "recordi" el que l'usuari va escriure
 const title = Astro.url.searchParams.get("title") || "";
 const sectionId = Astro.url.searchParams.get("sectionId") || "";
 ---
@@ -20,7 +20,7 @@ const sectionId = Astro.url.searchParams.get("sectionId") || "";
     />
   </div>
 
-  <!-- Filtro por Sección (Ejemplo con opciones) -->
+  <!-- Filtre per Seccio (exemple amb opcions) -->
   <div>
     <label class="block text-sm font-medium text-gray-700 mb-1">Secció</label>
     <select
@@ -30,7 +30,7 @@ const sectionId = Astro.url.searchParams.get("sectionId") || "";
       <option value="">Totes les seccions</option>
       <option value="1" selected={sectionId === "1"}>Esdeveniments</option>
       <option value="2" selected={sectionId === "2"}>Comunicats</option>
-      <!-- Aquí deberías iterar tus secciones si tienes una función para obtenerlas -->
+      <!-- Aqui hauries d'iterar les teves seccions si tens una funcio per obtenir-les -->
     </select>
   </div>
 

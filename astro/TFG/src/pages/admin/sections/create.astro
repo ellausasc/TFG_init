@@ -56,13 +56,13 @@ import NewsFields from "../../../components/news/NewsFields.astro";
 
     // Construcció de l'input segons l'esquema GraphQL
     const input = {
-      name: formData.get("name"),
-      description: formData.get("description"),
+      name: (formData.get("name") || "") as string,
+      description: (formData.get("description") || "") as string,
       isActive: formData.get("isActive") === "on",
       publishedAt: new Date().toISOString(),
       mainNews: {
         // Com que hem amagat el títol, usem el nom de la secció com a títol
-        title: formData.get("name"),
+        title: (formData.get("name") || "") as string,
         shortDescription: shortDesc?.value || "",
         longDescription: longDesc?.value || "",
         status: "PUBLISHED",

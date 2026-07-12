@@ -20,7 +20,7 @@ if (!activity) {
 }
 
 // Funció auxiliar per formatar les dates de manera més llegible
-const formatDate = (dateString: string) => {
+const formatDate = (dateString: string | undefined) => {
   if (!dateString) return null;
   return new Date(dateString).toLocaleDateString("ca-ES", {
     weekday: 'long',
@@ -138,63 +138,46 @@ const authorName = activity.author ? `${activity.author.firstName} ${activity.au
 </Layout>
 
 <script>
+  // Importem la nova funcio del servei
+  import { enrollInActivity } from "../../services/activitiesService";
+
   const enrollBtn = document.getElementById('enroll-btn') as HTMLButtonElement;
   const enrollMessage = document.getElementById('enroll-message') as HTMLParagraphElement;
 
   if (enrollBtn) {
     enrollBtn.addEventListener('click', async () => {
       const activityId = enrollBtn.getAttribute('data-activity-id');
-      const token = localStorage.getItem('token');
+      if (!activityId) return;
 
-      if (!token) {
-        enrollMessage.textContent = "Has d'iniciar sessió per inscriure't.";
-        enrollMessage.className = "text-sm font-medium text-center mt-3 text-red-600 block";
-        setTimeout(() => window.location.href = '/login', 2000);
-        return;
-      }
-
+      // Canviem l'estat visual del boto
       const originalText = enrollBtn.innerHTML;
       enrollBtn.innerHTML = "Processant...";
       enrollBtn.disabled = true;
       enrollBtn.classList.add('opacity-75', 'cursor-not-allowed');
 
       try {
-        const response = await fetch("http://localhost:4000/graphql", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            query: `
-              mutation EnrollInActivity($activityId: ID!) {
-                enrollInActivity(activityId: $activityId)
-              }
-            `,
-            variables: { activityId }
-          }),
-        });
+        // Crida neta al Servei
+        await enrollInActivity(activityId);
 
-        const result = await response.json();
-
-        if (result.errors && result.errors.length > 0) {
-          throw new Error(result.errors[0].message);
-        }
-
-        if (result.data.enrollInActivity) {
-          enrollMessage.textContent = "Inscripció realitzada amb èxit! 🎉";
-          enrollMessage.className = "text-sm font-medium text-center mt-3 text-green-600 block";
-          enrollBtn.innerHTML = "Inscrit correctament";
-          enrollBtn.classList.replace('bg-gray-900', 'bg-green-600');
-          enrollBtn.classList.replace('hover:bg-gray-800', 'hover:bg-green-700');
-        }
+        // Éxito
+        enrollMessage.textContent = "Inscripció realitzada amb èxit! 🎉";
+        enrollMessage.className = "text-sm font-medium text-center mt-3 text-green-600 block";
+        enrollBtn.innerHTML = "Inscrit correctament";
+        enrollBtn.classList.replace('bg-gray-900', 'bg-green-600');
+        enrollBtn.classList.replace('hover:bg-gray-800', 'hover:bg-green-700');
 
       } catch (error: any) {
+        // Fracaso
         enrollMessage.textContent = `Error: ${error.message}`;
         enrollMessage.className = "text-sm font-medium text-center mt-3 text-red-600 block";
         enrollBtn.innerHTML = originalText;
         enrollBtn.disabled = false;
         enrollBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+
+        // Si l'error ve de GraphQL Shield indicant manca d'autenticacio, redirigim
+        if (error.message.toLowerCase().includes("autenticat")) {
+          setTimeout(() => window.location.href = '/auth/login', 2000);
+        }
       }
     });
   }

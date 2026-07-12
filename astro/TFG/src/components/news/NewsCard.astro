@@ -10,12 +10,12 @@ const { newsEntry } = Astro.props;
 // Convertimos la fecha, asegurándonos de manejar posibles nulos
 const pubDate = newsEntry.publishedAt ? new Date(newsEntry.publishedAt) : new Date();
 
-// Extraemos el nombre completo del autor (objeto anidado)
+// Extraiem el nom complet de l'autor (objecte niat)
 const authorName = newsEntry.author 
   ? `${newsEntry.author.firstName} ${newsEntry.author.lastName1}` 
   : "Anònim";
 
-// Extraemos el nombre de la sección (objeto anidado)
+// Extraiem el nom de la seccio (objecte niat)
 const sectionName = newsEntry.section ? newsEntry.section.name : "General";
 ---
 

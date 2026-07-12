@@ -12,10 +12,10 @@ if (!slug) return Astro.redirect('/404');
 
 const section = await getSectionById(slug);
 
-// if (!section) return Astro.redirect('/404');
+if (!section) return Astro.redirect('/404');
 
 // Lògica de dates per a la creació de la secció
-const rawDate = section.createdAt;
+const rawDate = section?.createdAt;
 const dateObj = rawDate ? new Date(rawDate) : null;
 const displayDate = dateObj ? dateObj.toLocaleDateString("ca-ES") : "Data no disponible";
 ---
