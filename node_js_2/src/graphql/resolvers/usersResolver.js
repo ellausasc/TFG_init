@@ -21,19 +21,19 @@ const resolvers = {
     loginUser: async (_, { email, password }, context) => {
       const result = await usersService.loginUser(email, password);
 
-      // El Resolver se encarga de la manipulación HTTP (Setear Cookie)
+      // El resolver s'encarrega de la manipulacio HTTP (establir la galeta)
       context.res.cookie('token', result.token, { 
         httpOnly: true, 
         path: '/', 
         sameSite: 'lax', 
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 días en ms
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 dies en ms
       }); 
 
       return result;
     },
 
     updateUser: async (_, { id, input }, context) => {
-      // Pasamos el 'id' (si viene en los argumentos) y el 'context.userId' (del token actual)
+      // Passem l'id (si ve als arguments) i el context.userId (del token actual)
       return await usersService.updateUser(id, input, context.userId);
     },
 

@@ -81,4 +81,22 @@ const update = async (id, input) => {
   return await activitiesRepository.update(numericId, dataToUpdate);
 };
 
-module.exports = { getAll, getBySlug, getById, getFiltered, create, update };
+const enroll = async (activityId, userId) => {
+  if (!userId) throw new Error("No estàs autenticat. Has d'iniciar sessió per inscriure't a una activitat.");
+
+  const numericActivityId = parseInt(activityId, 10);
+  const activity = await activitiesRepository.findById(numericActivityId);
+  if (!activity) throw new Error("L'activitat no existeix.");
+
+  const alreadyEnrolled = activity.participants.some((participant) => participant.id === userId);
+  if (alreadyEnrolled) throw new Error("Ja estàs inscrit en aquesta activitat.");
+
+  if (activity.registrationEndDate && new Date() > new Date(activity.registrationEndDate)) {
+    throw new Error("El termini d'inscripció d'aquesta activitat ja ha finalitzat.");
+  }
+
+  await activitiesRepository.enroll(numericActivityId, userId);
+  return true;
+};
+
+module.exports = { getAll, getBySlug, getById, getFiltered, create, update, enroll };

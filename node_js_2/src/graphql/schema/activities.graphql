@@ -16,7 +16,7 @@ type Activity {
   
   author: User!
   section: Section!
-  participants: [User!]! # Lista de usuarios inscritos
+  participants: [User!]! # Llista d'usuaris inscrits
 }
 
 input CreateActivityInput {

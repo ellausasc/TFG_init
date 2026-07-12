@@ -1,7 +1,7 @@
-// Importamos el servicio
-const sectionService = require("../../services/sectionsService");
+// Importem el servei
+const sectionsService = require("../../services/sectionsService");
 
-// Función para asegurar que las fechas de Prisma (Date) se conviertan a String para GraphQL
+// Funcio per assegurar que les dates de Prisma (Date) es converteixin a String per GraphQL
 const formatSection = (section) => {
   if (!section) return null;
   return {
@@ -13,29 +13,29 @@ const formatSection = (section) => {
 
 module.exports = {
   Query: {
-    // Obtener TODAS las secciones
+    // Obtenir TOTES les seccions
     getAllSections: async () => {
-      const sections = await sectionService.getAll();
+      const sections = await sectionsService.getAll();
       return sections.map(formatSection);
     },
 
-    // Obtener UNA sección por su ID
+    // Obtenir UNA secció pel seu ID
     getSectionById: async (_, { id }) => {
-      const section = await sectionService.getById(id);
+      const section = await sectionsService.getById(id);
       return formatSection(section);
     }
   },
 
   Mutation: {
-    // CREAR una nueva sección
+    // CREAR una nova seccio
     createSection: async (_, { input }, context) => {
-      const newSection = await sectionService.create(input, context.userId);
+      const newSection = await sectionsService.create(input, context.userId);
       return formatSection(newSection);
     },
 
-    // MODIFICAR una sección existente
+    // MODIFICAR una seccio existent
     updateSection: async (_, { id, input }, context) => {
-      const updatedSection = await sectionService.update(id, input, context.userId);
+      const updatedSection = await sectionsService.update(id, input, context.userId);
       return formatSection(updatedSection);
     }
   }

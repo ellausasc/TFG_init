@@ -39,6 +39,32 @@ const findByEmailWithPermissions = async (email) => {
   });
 };
 
+const findByEmailWithPermissions = async (email) => {
+  return await prisma.user.findUnique({ 
+    where: { email },
+    include: { 
+      roles: {
+        include: { 
+          permission: { include: { module: true, action: true, section: true } } 
+        }
+      }
+    } 
+  });
+};
+
+const findByIdWithPermissions = async (id) => {
+  return await prisma.user.findUnique({
+    where: { id },
+    include: {
+      roles: {
+        include: {
+          permission: { include: { module: true, action: true, section: true } }
+        }
+      }
+    }
+  });
+};
+
 const create = async (data) => {
   return await prisma.user.create({ data, include: { roles: true } });
 };

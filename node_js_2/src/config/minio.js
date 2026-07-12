@@ -1,12 +1,12 @@
 const express = require("express");
 const multer = require("multer");
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-const prisma = require("./db"); // Assegura't d'importar Prisma aquí
+const prisma = require("./db");
 
-// 1. Creamos el Router de Express
+// 1. Creem el Router d'Express
 const router = express.Router();
 
-// 2. Configuramos el cliente de MinIO
+// 2. Configurem el client de MinIO
 const s3Client = new S3Client({
   region: "us-east-1",
   credentials: {
@@ -17,28 +17,28 @@ const s3Client = new S3Client({
   forcePathStyle: true, // Obligatori per a MinIO
 });
 
-// 3. Configuramos Multer para la memoria RAM
+// 3. Configurem Multer per a la memoria RAM
 const upload = multer({ storage: multer.memoryStorage() });
 
-// 4. Definimos el endpoint unificado
-router.post("/upload", upload.single("archivo"), async (req, res) => {
+// 4. Definim l'endpoint unificat
+router.post("/upload", upload.single("file"), async (req, res) => {
   try {
     const file = req.file;
-    // Llegim el camp de visibilitat des del body (per defecte el fem públic si no s'envia res)
-    const visibility = req.body.visibility || "public"; 
+    // Llegim el camp de visibilitat des del body (per defecte el fem public si no s'envia res)
+    const visibility = req.body.visibility || "public";
 
     if (!file) {
-      return res.status(400).json({ error: "No se encontró ningún archivo en la petición." });
+      return res.status(400).json({ error: "No s'ha trobat cap arxiu a la peticio." });
     }
 
-    const nombreLimpio = file.originalname.replace(/\s+/g, "_");
-    const fileName = `${Date.now()}-${nombreLimpio}`;
-    
-    // 5. Lògica d'enrutament (Bucket Públic vs Privat)
+    const sanitizedFileName = file.originalname.replace(/\s+/g, "_");
+    const fileName = `${Date.now()}-${sanitizedFileName}`;
+
+    // 5. Logica d'enrutament (Bucket Public vs Privat)
     const isPrivate = visibility === "private";
     const bucketName = isPrivate ? "private-docs" : process.env.MINIO_PUBLIC_BUCKET_NAME;
 
-    // Subir a MinIO al bucket corresponent
+    // Pugem a MinIO al bucket corresponent
     await s3Client.send(
       new PutObjectCommand({
         Bucket: bucketName,
@@ -48,35 +48,34 @@ router.post("/upload", upload.single("archivo"), async (req, res) => {
       })
     );
 
-    // 6. Generar el valor a guardar a la base de dades
+    // 6. Generem el valor a desar a la base de dades
     const endpoint = process.env.MINIO_ENDPOINT;
-    
-    // ATENCIÓ: Si és públic guardem la URL sencera. 
-    // Si és privat, només guardem el Key (fileName) per generar la Presigned URL en el futur.
-    const urlParaGuardar = isPrivate 
-      ? fileName 
+
+    // ATENCIO: Si es public desem la URL sencera.
+    // Si es privat, nomes desem la Key (fileName) per generar la Presigned URL en el futur.
+    const urlToSave = isPrivate
+      ? fileName
       : `${endpoint}/${bucketName}/${fileName}`;
 
-    // Guardar en base de datos
-    const documentoGuardado = await prisma.documents.create({
+    // Desem a la base de dades
+    const savedDocument = await prisma.documents.create({
       data: {
-        nombre: file.originalname,
-        url: urlParaGuardar,
-        tipo: file.mimetype,
+        name: file.originalname,
+        url: urlToSave,
+        type: file.mimetype,
       },
     });
 
-    res.status(200).json({ 
-      success: true, 
-      documento: documentoGuardado,
-      url: urlParaGuardar // Retornem la dada perquè el frontend la pugui utilitzar immediatament
+    res.status(200).json({
+      success: true,
+      document: savedDocument,
+      url: urlToSave // Retornem la dada perque el frontend la pugui utilitzar immediatament
     });
 
   } catch (error) {
-    console.error("Error al subir el archivo a MinIO:", error);
-    res.status(500).json({ error: "Fallo interno al procesar el documento." });
+    console.error("Error en pujar l'arxiu a MinIO:", error);
+    res.status(500).json({ error: "Error intern en processar el document." });
   }
 });
 
-// 5. Exportamos el Router
 module.exports = router;

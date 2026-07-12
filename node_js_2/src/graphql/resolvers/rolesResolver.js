@@ -2,7 +2,7 @@ const rolesService = require("../../services/rolesService");
 
 module.exports = {
   Query: {
-    // Consultas para Roles
+    // Consultes per a Rols
     getAllRoles: async () => {
       return await rolesService.getAllRoles();
     },
@@ -13,7 +13,7 @@ module.exports = {
       return await rolesService.getUserRoles(userId);
     },
 
-    // Consultas para Módulos y Acciones
+    // Consultes per a Moduls i Accions
     getAllModules: async () => {
       return await rolesService.getAllModules();
     },
@@ -23,7 +23,7 @@ module.exports = {
   },
 
   Mutation: {
-    // --- Gestión de Roles ---
+    // --- Gestio de Rols ---
     createRole: async (_, { input }) => {
       return await rolesService.createRole(input);
     },
@@ -34,7 +34,7 @@ module.exports = {
       return await rolesService.deleteRole(id);
     },
 
-    // --- Asignación de Usuarios a Roles ---
+    // --- Assignacio d'Usuaris a Rols ---
     assignRoleToUser: async (_, { userId, roleId }) => {
       return await rolesService.assignRoleToUser(userId, roleId);
     },
@@ -42,7 +42,7 @@ module.exports = {
       return await rolesService.removeRoleFromUser(userId, roleId);
     },
 
-    // --- Gestión de Permisos dentro de un Rol ---
+    // --- Gestio de Permisos dins d'un Rol ---
     addPermissionToRole: async (_, { input }) => {
       return await rolesService.addPermissionToRole(input);
     },

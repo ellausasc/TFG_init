@@ -1,5 +1,5 @@
 const rolesRepository = require("../repositories/rolesRepository");
-const usersRepository = require("../repositories/usersRepository"); // Reutilizamos el repo de usuarios!
+const usersRepository = require("../repositories/usersRepository"); // Reutilitzem el repositori d'usuaris!
 
 const getAllRoles = async () => await rolesRepository.findAllRoles();
 const getRoleById = async (id) => await rolesRepository.findRoleById(parseInt(id, 10));

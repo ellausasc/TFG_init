@@ -15,10 +15,10 @@ const findById = async (id) => {
 };
 
 const createWithMainNews = async (sectionData, newsData) => {
-  // La transacción (lógica de base de datos) se queda en el repositorio
+  // La transaccio (logica de base de dades) es queda al repositori
   return await prisma.$transaction(async (tx) => {
     const newSection = await tx.section.create({ data: sectionData });
-    newsData.section = { connect: { id: newSection.id } }; // Conectamos la noticia a la sección
+    newsData.section = { connect: { id: newSection.id } }; // Connectem la noticia a la seccio
 
     const defaultNews = await tx.news.create({ data: newsData });
 

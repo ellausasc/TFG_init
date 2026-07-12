@@ -167,13 +167,15 @@ model Activity {
 
 model Documents {
   id        Int          @id @default(autoincrement())
-  nombre    String
+  name      String
   url       String
-  tipo      String
+  type      String
   role      DocumentRole @default(ATTACHMENT)
   createdAt DateTime     @default(now())
 
-  // Com a màxim UN dels tres camps següents ha d'estar informat
+  // Propietari: com a màxim UN dels tres camps següents ha d'estar informat
+  // (relació polimòrfica validada a nivell d'aplicació; Prisma no suporta
+  // una restricció XOR nativa entre múltiples claus foranies opcionals)
   userId Int?  @unique
   user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 

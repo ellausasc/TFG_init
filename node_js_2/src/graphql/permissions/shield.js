@@ -47,5 +47,4 @@ const permissions = shield({
   allowExternalErrors: true 
 });
 
-// ÚNICO EXPORT DE ESTE ARCHIVO
 module.exports = permissions;

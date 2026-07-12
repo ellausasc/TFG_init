@@ -1,5 +1,5 @@
 const { rule } = require('graphql-shield');
-const userService = require("../../services/usersService");
+const usersService = require("../../services/usersService");
 
 const isAuthenticated = rule({ cache: 'contextual' })(async (parent, args, ctx) => {
   return ctx.userId !== null && ctx.userId !== undefined;
@@ -10,7 +10,7 @@ const can = (moduleName, actionCode) => rule({ cache: 'strict' })(
     if (!ctx.userId) return new Error("Usuari no autenticat");
 
     if (!ctx.permissions) {
-      ctx.permissions = await userService.getUserPermissions(ctx.userId);
+      ctx.permissions = await usersService.getUserPermissions(ctx.userId);
     }
 
     const hasPerm = (requiredPerm) => {
@@ -37,7 +37,6 @@ const isOwner = rule({ cache: 'strict' })(async (parent, args, ctx) => {
   return args.id.toString() === ctx.userId.toString();
 });
 
-// ÚNICO EXPORT DE ESTE ARCHIVO
 module.exports = {
   isAuthenticated,
   can,

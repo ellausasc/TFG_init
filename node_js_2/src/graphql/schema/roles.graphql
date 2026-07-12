@@ -1,5 +1,5 @@
 # ==========================================
-# 1. TIPOS DE DATOS (TYPES)
+# 1. TIPUS DE DADES (TYPES)
 # ==========================================
 
 type Module {
@@ -30,7 +30,7 @@ type Role {
 }
 
 # ==========================================
-# 2. INPUTS (Datos de entrada para mutaciones)
+# 2. INPUTS (Dades d'entrada per a mutacions)
 # ==========================================
 
 input CreateRoleInput {
@@ -64,7 +64,7 @@ extend type Query {
 }
 
 # ==========================================
-# 4. MUTACIONES (Escritura / Modificación)
+# 4. MUTACIONS (Escriptura / Modificacio)
 # ==========================================
 
 extend type Mutation {

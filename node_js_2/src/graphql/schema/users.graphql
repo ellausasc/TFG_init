@@ -1,10 +1,10 @@
-# Definimos el tipo Role para que Prisma lo inyecte directamente sin mapeos
+# Definim el tipus Role perque Prisma l'injecti directament sense mapejos
 type Role {
   id: ID!
   description: String!
 }
 
-# Definición del Usuario (espejo exacto de Prisma)
+# Definicio de l'Usuari (mirall exacte de Prisma)
 type User {
   id: ID!
   code: String!           # Añadimos el código de socio que genera Prisma
@@ -21,13 +21,13 @@ type User {
   roles: [Role!]!         # Ahora devuelve una lista de objetos Role
 }
 
-# Payload para autenticación
+# Payload per a l'autenticacio
 type AuthPayload {
   token: String!
   user: User!
 }
 
-# Input de Registro (también en camelCase para que coincida con el frontend)
+# Input de Registre (tambe en camelCase perque coincideixi amb el frontend)
 input RegisterUserInput {
   firstName: String!
   lastName1: String!

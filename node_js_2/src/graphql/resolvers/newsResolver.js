@@ -1,7 +1,7 @@
-// Importamos TODO el servicio de noticias (Fíjate que ya NO importamos Prisma aquí)
+// Importem tot el servei de noticies (ja no importem Prisma directament aqui)
 const newsService = require("../../services/newsService");
 
-// El formateo de fechas se queda aquí porque es una necesidad específica de GraphQL
+// El formateig de dates es queda aqui perque es una necessitat especifica de GraphQL
 const formatNews = (news) => {
   if (!news) return null;
   return {
@@ -34,13 +34,13 @@ module.exports = {
 
   Mutation: {
     createNews: async (_, { input }, context) => {
-      // Pasamos el input y el userId al servicio
+      // Passem l'input i l'userId al servei
       const newNews = await newsService.create(input, context.userId);
       return formatNews(newNews);
     },
 
     updateNews: async (_, { id, input }) => {
-      // Pasamos el id y el input al servicio
+      // Passem l'id i l'input al servei
       const updatedNews = await newsService.update(id, input);
       return formatNews(updatedNews);
     },

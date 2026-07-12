@@ -1,10 +1,10 @@
-# Solo definimos Image una vez aquí
+# Nomes definim Image una vegada aqui
 type Image {
   src: String!
   alt: String!
 }
 
-# Iniciamos los bloques Query y Mutation base
+# Iniciem els blocs Query i Mutation base
 type Query {
   _empty: String
 }

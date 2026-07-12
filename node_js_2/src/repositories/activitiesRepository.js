@@ -56,4 +56,12 @@ const update = async (id, data) => {
   });
 };
 
-module.exports = { findAll, findBySlug, findById, findFiltered, findSlugExceptId, create, update };
+const enroll = async (activityId, userId) => {
+  return await prisma.activity.update({
+    where: { id: activityId },
+    data: { participants: { connect: { id: userId } } },
+    include: { author: true, section: true, participants: true }
+  });
+};
+
+module.exports = { findAll, findBySlug, findById, findFiltered, findSlugExceptId, create, update, enroll };

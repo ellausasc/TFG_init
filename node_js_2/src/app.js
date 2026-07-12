@@ -9,8 +9,7 @@ const jwt = require('jsonwebtoken');
 const prisma = require("./config/db");
 const { schema } = require("./graphql");
 const minioRouter = require("./config/minio");
-const permission = require("./graphql/permissions/shield");
-// const { use } = require("react");
+const permissions = require("./graphql/permissions/shield");
 const { applyMiddleware } = require("graphql-middleware");
 const JWT_SECRET = process.env.JWT_SECRET || 'XX';
 
@@ -19,12 +18,12 @@ const upload = multer({ storage: multer.memoryStorage() });
 async function startServer() {
   const app = express();
 
-  app.use(cors({credentials: true, origin: 'http://localhost:4321'}));
+  app.use(cors({ credentials: true, origin: 'http://localhost:4321' }));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
 
-  const schemaWithMiddleware = applyMiddleware(schema, permission);
+  const schemaWithMiddleware = applyMiddleware(schema, permissions);
 
   app.use(minioRouter);
 
@@ -39,21 +38,22 @@ async function startServer() {
     "/graphql",
     expressMiddleware(server, {
       context: async ({ req, res }) => {
-        // 1. Buscamos el token en la cabecera 'Authorization'
+        // Busquem el token a la galeta 'token'
         const token = req.cookies?.token;
 
         let userId = null;
-        let roles = [];
+        let userPermissions = [];
 
         if (token) {
           try {
-            // 2. Decodificamos y validamos el token
+            // Decodifiquem i validem el token
             const decoded = jwt.verify(token, JWT_SECRET);
             userId = decoded.userId;
-            roles = decoded.userPermissions || [];
-            // 3. Inyectamos el userId en el context para que lo lea la query `me`
+            userPermissions = decoded.userPermissions || [];
+            // Injectem l'userId i els permisos al context perque els llegeixin
+            // les regles de graphql-shield i el resolver `me`
           } catch (err) {
-            console.warn("Error JWT:", err.message);
+            console.warn("Error de validacio del JWT:", err.message);
           }
         }
 
@@ -61,17 +61,17 @@ async function startServer() {
           req,
           res,
           userId,
-          roles
+          permissions: userPermissions
         };
       },
     }),
   );
 
   app.listen(4000, () => {
-    console.log("Servidor en: http://localhost:4000/graphql");
+    console.log("Servidor en marxa a: http://localhost:4000/graphql");
   });
 }
 
 startServer().catch((err) => {
-  console.error("Error al arrancar el servidor:", err);
+  console.error("Error en arrencar el servidor:", err);
 });

@@ -1,4 +1,4 @@
-# Definición de la entidad Section
+# Definicio de l'entitat Section
 type Section {
   id: ID!
   name: String!
@@ -15,8 +15,8 @@ type Section {
   roles: [Role!]!
 }
 
-# Input para CREAR una sección nueva
-# Solo pedimos lo esencial. El ID y el createdAt los genera la BBDD automáticamente.
+# Input per CREAR una seccio nova
+# Nomes demanem l'essencial. L'ID i el createdAt els genera la BD automaticament.
 input CreateSectionInput {
   name: String!
   description: String
@@ -42,8 +42,8 @@ input UpdateSectionMainNewsInput {
   status: String
 }
 
-# Input para MODIFICAR una sección existente
-# Todos los campos son opcionales para permitir actualizaciones parciales
+# Input per MODIFICAR una seccio existent
+# Tots els camps son opcionals per permetre actualitzacions parcials
 input UpdateSectionInput {
   name: String
   description: String
@@ -52,13 +52,13 @@ input UpdateSectionInput {
   mainNews: UpdateSectionMainNewsInput
 }
 
-# Consultas (Queries)
+# Consultes (Queries)
 extend type Query {
   getAllSections: [Section!]!
   getSectionById(id: ID!): Section
 }
 
-# Modificaciones (Mutations)
+# Modificacions (Mutations)
 extend type Mutation {
   createSection(input: CreateSectionInput!): Section!
   updateSection(id: ID!, input: UpdateSectionInput!): Section!

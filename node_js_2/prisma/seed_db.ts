@@ -1,13 +1,13 @@
-const prisma = require('../db.js');
+const prisma = require('../src/config/db.js');
 const bcrypt = require('bcrypt');
 
 async function main() {
-  console.log('Iniciando el proceso de seed...');
+  console.log('Iniciant el proces de seed...');
 
   // ==========================================
-  // 0. ELIMINAR DATOS PREVIOS
+  // 0. ELIMINAR DADES PREVIES
   // ==========================================
-  console.log('Limpiando la base de datos...');
+  console.log('Netejant la base de dades...');
   await prisma.news.deleteMany();
   await prisma.activity.deleteMany();
   await prisma.section.deleteMany();
@@ -16,25 +16,25 @@ async function main() {
   await prisma.module.deleteMany();
   await prisma.user.deleteMany();
   await prisma.role.deleteMany();
-  
+
   // ==========================================
-  // 1. Añadir Módulos
+  // 1. Afegir Moduls
   // ==========================================
-  console.log('Creando módulos...');
+  console.log('Creant moduls...');
   const moduleNames = ['NEWS', 'ACTIVITIES', 'ROLES', 'USERS', 'SECTIONS', 'ASSEMBLY'];
   const createdModules = [];
-  
+
   for (const name of moduleNames) {
     const mod = await prisma.module.create({
-      data: { name, description: `Módulo de ${name}` },
+      data: { name, description: `Modul de ${name}` },
     });
     createdModules.push(mod);
   }
 
   // ==========================================
-  // 2. Añadir Acciones
+  // 2. Afegir Accions
   // ==========================================
-  console.log('Creando acciones...');
+  console.log('Creant accions...');
   const actionData = [
     { action: '* ', description: 'all' },
     { action: '01', description: 'create' },
@@ -42,7 +42,7 @@ async function main() {
     { action: '03', description: 'read' },
     { action: '04', description: 'delete' }
   ];
-  
+
   const createdActions = [];
 
   for (const item of actionData) {
@@ -53,9 +53,9 @@ async function main() {
   }
 
   // ==========================================
-  // 3. Añadir Rol ADMIN y Asignar TODOS los Permisos
+  // 3. Afegir Rol ADMIN i Assignar TOTS els Permisos
   // ==========================================
-  console.log('Creando rol ADMIN...');
+  console.log('Creant rol ADMIN...');
   const adminRole = await prisma.role.create({
     data: { description: 'ADMIN' },
   });
@@ -72,25 +72,25 @@ async function main() {
         },
       });
     }
-    console.log('✅ Permisos totales asignados al rol ADMIN.');
+    console.log('Permisos totals assignats al rol ADMIN.');
   }
 
   // ==========================================
-  // 4. Crear Sección por defecto
+  // 4. Crear Seccio per defecte
   // ==========================================
-  console.log('Creando sección por defecto...');
+  console.log('Creant seccio per defecte...');
   const defaultSection = await prisma.section.create({
     data: {
       name: 'General',
-      description: 'Sección principal del sistema',
+      description: 'Seccio principal del sistema',
       isActive: true,
     }
   });
 
   // ==========================================
-  // 5. Añadir Usuario y ASIGNARLE EL ROL ADMIN
+  // 5. Afegir Usuari i ASSIGNAR-LI EL ROL ADMIN
   // ==========================================
-  console.log('Creando usuario admin@admin.com...');
+  console.log('Creant usuari admin@admin.com...');
   const hashedPassword = await bcrypt.hash('admin', 10);
 
   const adminUser = await prisma.user.create({
@@ -101,24 +101,24 @@ async function main() {
       dni: '00000000T',
       email: 'admin@admin.com',
       password: hashedPassword,
-      // AQUÍ SE ASIGNA EL ROL AL USUARIO
+      // Aqui s'assigna el rol a l'usuari
       roles: {
-        connect: [{ id: adminRole.id }] // Usamos un array de objetos para relaciones n:m
+        connect: [{ id: adminRole.id }] // Fem servir un array d'objectes per a relacions n:m
       }
     }
   });
-  console.log(`✅ Usuario creado y rol ADMIN asignado a ${adminUser.email}.`);
+  console.log(`Usuari creat i rol ADMIN assignat a ${adminUser.email}.`);
 
   // ==========================================
-  // 6. Añadir Noticia de Prueba
+  // 6. Afegir Noticia de Prova
   // ==========================================
-  console.log('Creando noticia de prueba...');
+  console.log('Creant noticia de prova...');
   await prisma.news.create({
     data: {
-      title: '¡Bienvenido al nuevo sistema!',
-      shortDescription: 'El sistema ha sido inicializado correctamente.',
-      longDescription: 'Esta es una noticia de prueba generada automáticamente por la semilla de la base de datos.',
-      slug: 'bienvenido-al-nuevo-sistema',
+      title: 'Benvingut al nou sistema!',
+      shortDescription: 'El sistema s\'ha inicialitzat correctament.',
+      longDescription: 'Aquesta es una noticia de prova generada automaticament per la llavor de la base de dades.',
+      slug: 'benvingut-al-nou-sistema',
       status: 'PUBLISHED',
       type: 'INFO',
       authorId: adminUser.id,
@@ -127,15 +127,15 @@ async function main() {
   });
 
   // ==========================================
-  // 7. Añadir Actividad de Prueba
+  // 7. Afegir Activitat de Prova
   // ==========================================
-  console.log('Creando actividad de prueba...');
+  console.log('Creant activitat de prova...');
   await prisma.activity.create({
     data: {
-      title: 'Reunión de Inicialización',
-      shortDescription: 'Primera reunión técnica del portal.',
-      longDescription: 'Revisión general de módulos, roles y permisos cargados en el sistema.',
-      slug: 'reunion-inicializacion',
+      title: 'Reunio d\'inicialitzacio',
+      shortDescription: 'Primera reunio tecnica del portal.',
+      longDescription: 'Revisio general de moduls, rols i permisos carregats al sistema.',
+      slug: 'reunio-inicialitzacio',
       activityDate: new Date(new Date().setDate(new Date().getDate() + 7)),
       status: true,
       authorId: adminUser.id,
@@ -143,12 +143,12 @@ async function main() {
     }
   });
 
-  console.log('🎉 Seed finalizado con éxito.');
+  console.log('Seed finalitzat amb exit.');
 }
 
 main()
   .catch((e) => {
-    console.error("Error durante el seed:", e);
+    console.error("Error durant el seed:", e);
     process.exit(1);
   })
   .finally(async () => {

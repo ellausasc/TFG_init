@@ -40,13 +40,9 @@ const registerUser = async (input) => {
   return { token, user: newUser };
 };
 
-const loginUser = async (email, password) => {
-  const user = await usersRepository.findByEmailWithPermissions(email);
-  if (!user) throw new Error("Credencials incorrectes."); 
-
-  const isValidPassword = await bcrypt.compare(password, user.password);
-  if (!isValidPassword) throw new Error("Credencials incorrectes.");
-
+// Construeix la llista de cadenes de permisos (MODUL:ACCIO[:idSeccio]) a partir
+// dels rols d'un usuari carregat amb `roles.permission.module/action/section`
+const buildPermissionsList = (user) => {
   const permissionsSet = new Set();
   user.roles.forEach(role => {
     role.permission.forEach(permission => {
@@ -57,8 +53,24 @@ const loginUser = async (email, password) => {
       permissionsSet.add(permString);
     });
   });
+  return Array.from(permissionsSet);
+};
 
-  const userPermissions = Array.from(permissionsSet);
+const getUserPermissions = async (userId) => {
+  if (!userId) return [];
+  const user = await usersRepository.findByIdWithPermissions(userId);
+  if (!user) return [];
+  return buildPermissionsList(user);
+};
+
+const loginUser = async (email, password) => {
+  const user = await usersRepository.findByEmailWithPermissions(email);
+  if (!user) throw new Error("Credencials incorrectes."); 
+
+  const isValidPassword = await bcrypt.compare(password, user.password);
+  if (!isValidPassword) throw new Error("Credencials incorrectes.");
+
+  const userPermissions = buildPermissionsList(user);
   const token = jwt.sign({ userId: user.id, userPermissions }, JWT_SECRET, { expiresIn: '7d' });
   
   return { token, user };
@@ -101,4 +113,4 @@ const changePassword = async (userId, oldPassword, newPassword) => {
   return true;
 };
 
-module.exports = { getAllUsers, getUserById, getMe, registerUser, loginUser, updateUser, changePassword };
+module.exports = { getAllUsers, getUserById, getMe, registerUser, loginUser, updateUser, changePassword, getUserPermissions };

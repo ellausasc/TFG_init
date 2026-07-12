@@ -29,7 +29,7 @@ input CreateNewsInput {
   sectionId: Int!
 }
 
-# NUEVO: Input para actualizar (los campos no tienen '!' porque son opcionales)
+# NOU: Input per actualitzar (els camps no tenen '!' perque son opcionals)
 input UpdateNewsInput {
   title: String
   shortDescription: String
@@ -53,7 +53,7 @@ input NewsSortInput {
   direction: String # "ASC", "DESC"
 }
 
-# Tipo para devolver resultados paginados
+# Tipus per retornar resultats paginats
 type NewsPaginationResult {
   items: [News!]!
   totalCount: Int!
