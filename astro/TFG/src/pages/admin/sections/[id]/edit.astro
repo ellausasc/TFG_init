@@ -93,7 +93,6 @@ if (!section) return Astro.redirect('/404');
     console.log("Long description value:", longDesc?.value);
 
     const result = document.getElementById("result");
-    const token = localStorage.getItem("token") || "";
 
     try {
       result!.innerText = "Actualitzant secció...";

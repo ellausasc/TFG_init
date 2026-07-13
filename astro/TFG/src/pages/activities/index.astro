@@ -18,6 +18,7 @@ const page = parseInt(Astro.url.searchParams.get("page") || "1");
 const filter: any = {};
 if (title) filter.title = title;
 if (sectionId) filter.sectionId = parseInt(sectionId);
+filter.type = "GENERAL";
 
 // 3. Llamamos al servicio de actividades
 const { items: publishedActivities } = await getActivities({
