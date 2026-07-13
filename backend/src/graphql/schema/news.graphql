@@ -1,0 +1,77 @@
+type News {
+  id: ID!
+  title: String!
+  shortDescription: String!
+  longDescription: String!
+  createdAt: String!
+  publishedAt: String
+  status: String
+  type: String
+  mainImage: String
+  secondaryImage: String
+  slug: String!
+  
+  # Relaciones
+  author: User!
+  section: Section!
+  mainPageOf: Section
+}
+
+input CreateNewsInput {
+  title: String!
+  shortDescription: String!
+  longDescription: String!
+  status: String
+  type: String
+  publishedAt: String
+  mainImage: String
+  secondaryImage: String
+  sectionId: Int!
+}
+
+# NOU: Input per actualitzar (els camps no tenen '!' perque son opcionals)
+input UpdateNewsInput {
+  title: String
+  shortDescription: String
+  longDescription: String
+  status: String
+  type: String
+  mainImage: String
+  secondaryImage: String
+  slug: String
+  sectionId: Int
+}
+
+input NewsFilterInput {
+  title: String
+  sectionId: Int
+  authorId: Int
+}
+
+input NewsSortInput {
+  field: String # "publishedAt", "title", "author"
+  direction: String # "ASC", "DESC"
+}
+
+# Tipus per retornar resultats paginats
+type NewsPaginationResult {
+  items: [News!]!
+  totalCount: Int!
+}
+
+extend type Query {
+  getAllNews: [News!]!
+  getNewsBySlug(slug: String!): News
+  getNewsFiltered(
+    filter: NewsFilterInput
+    sort: NewsSortInput,
+    page: Int,
+    limit: Int
+  ): NewsPaginationResult
+}
+
+extend type Mutation {
+  createNews(input: CreateNewsInput!): News!
+  # DESCOMENTADO: Ahora GraphQL ya sabe que esta mutación existe
+  updateNews(id: ID!, input: UpdateNewsInput!): News!
+}

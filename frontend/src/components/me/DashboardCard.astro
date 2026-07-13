@@ -1,0 +1,47 @@
+---
+// src/components/ui/DashboardCard.astro
+
+export interface Props {
+  title: string;
+  description: string;
+  path: string;
+  icon: string;
+  theme?: "indigo" | "emerald";
+}
+
+const { title, description, path, icon, theme = "indigo" } = Astro.props;
+
+// Diccionari de classes de Tailwind segons el tema escollit
+const themeStyles = {
+  indigo: {
+    card: "hover:border-indigo-200 hover:bg-indigo-50/50",
+    iconContainer: "bg-indigo-100 text-indigo-600",
+    titleHover: "group-hover:text-indigo-700"
+  },
+  emerald: {
+    card: "hover:border-emerald-200 hover:bg-emerald-50/50",
+    iconContainer: "bg-emerald-100 text-emerald-600",
+    titleHover: "group-hover:text-emerald-700"
+  }
+};
+
+const currentTheme = themeStyles[theme];
+---
+
+<a 
+  href={path} 
+  class={`group bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 flex flex-col items-center text-center ${currentTheme.card}`}
+>
+  <div class={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200 ${currentTheme.iconContainer}`}>
+    <!-- set:html renderitza l'string del path directament a dins de l'SVG -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" set:html={icon} />
+  </div>
+  
+  <h3 class={`text-sm font-bold text-gray-800 mb-1 transition-colors line-clamp-1 ${currentTheme.titleHover}`}>
+    {title}
+  </h3>
+  
+  <p class="text-xs text-gray-500 leading-tight line-clamp-2">
+    {description}
+  </p>
+</a>

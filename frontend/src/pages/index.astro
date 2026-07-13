@@ -1,0 +1,57 @@
+---
+// index.astro
+import "../styles/global.css";
+import Layout from "../layouts/Layout.astro";
+import Container from "../components/ui/Container.astro";
+import SectionHead from "../components/ui/SectionHead.astro";
+import ContactInfo from "../components/contact/ContactInfo.astro";
+
+import CardNews from "../components/news/NewsCard.astro";
+import CardActivity from "../components/activities/ActivityCard.astro";
+
+import { getHomeData } from "../services/homeService";
+
+// Obtenim les dades del nou esquema
+const { news, activities } = await getHomeData();
+
+const allNews = news;
+
+const allActivites = activities;
+
+---
+
+<Layout title="Home">
+  <Container>
+    <SectionHead align="center">
+      <Fragment slot="title">Welcome to Associa't</Fragment>
+      <Fragment slot="desc">A platform to connect people and associations</Fragment>
+    </SectionHead>
+    
+    <main class="mt-16">
+      
+      <div>
+        <h2 class="text-4xl font-bold tracking-tight text-left mb-4">
+          Últimes notícies
+        </h2>
+        <ul class="grid md:grid-cols-5 gap-8">
+          {allNews.map((newsEntry: any) => (
+            <CardNews newsEntry={newsEntry} />
+          ))}
+        </ul>
+      </div>
+
+      <div class="mt-16">
+        <h2 class="text-4xl font-bold tracking-tight text-left mb-8">
+          Properes activitats
+        </h2>
+        <ul class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mx-auto">
+          {allActivites.map((activityEntry: any) => (
+            <CardActivity activityEntry={activityEntry} />
+          ))}
+        </ul>
+      </div>
+      
+      <ContactInfo />
+    </main>
+  </Container>
+</Layout>

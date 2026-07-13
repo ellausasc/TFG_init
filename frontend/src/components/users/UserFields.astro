@@ -1,0 +1,132 @@
+---
+// src/components/UserFields.astro
+import { Picture } from "astro:assets";
+
+export interface Props {
+  isProfile?: boolean;
+  defaultProfileImage?: string;
+  initialData?: any; // <-- Afegim initialData
+}
+
+const { 
+  isProfile = false,
+  defaultProfileImage = "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?&fit=crop&w=430&h=240",
+  initialData = {} // Inicialitzem com a objecte buit per evitar errors de 'undefined'
+} = Astro.props;
+
+const baseInput = "w-full px-4 py-3 border-2 rounded-md outline-none transition";
+const activeInput = "border-gray-200 focus:border-gray-800";
+const disabledInput = "bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed";
+
+// Formategem la data de naixement si ve informada (transformant el timestamp a YYYY-MM-DD)
+const formattedBirthDate = initialData?.birthDate 
+  ? new Date(Number(initialData.birthDate)).toISOString().split('T')[0] 
+  : "";
+---
+
+<div class="mb-6 flex flex-col items-center">
+  
+  <div class="relative w-32 h-32 mb-4 rounded-full overflow-hidden border-4 border-gray-100 shadow-sm bg-gray-50 flex items-center justify-center group">
+    <Picture
+      id="profile-picture-preview"
+      src={initialData?.profileImage || defaultProfileImage} 
+      alt="Vista prèvia del perfil"
+      width={128} 
+      height={128}
+      sizes="128px"
+      widths={[128, 256]}
+      class={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${!initialData?.profileImage && 'hidden'}`}
+    />
+    <span id="profile-placeholder" class={`text-gray-400 text-sm text-center px-2 ${initialData?.profileImage && 'hidden'}`}>Sense imatge</span>
+  </div>
+
+  <input
+    type="file"
+    id="profile-image-input"
+    accept="image/jpeg, image/png, image/webp"
+    class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 outline-none transition"
+    name="profileImage"
+  />
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="mb-6">
+    <label class="block text-sm font-semibold text-gray-900 mb-2">Nom</label>
+    <input type="text" name="firstName" value={initialData?.firstName || ""} required placeholder="Nom" class={`${baseInput} ${activeInput}`} />
+    <div class="empty-feedback invalid-feedback text-red-400 text-sm mt-1">Si us plau, introdueix el teu nom.</div>
+  </div>
+
+  <div class="mb-6">
+    <label class="block text-sm font-semibold text-gray-900 mb-2">Primer Cognom</label>
+    <input type="text" name="lastName1" value={initialData?.lastName1 || ""} required placeholder="Primer Cognom" class={`${baseInput} ${activeInput}`} />
+    <div class="empty-feedback invalid-feedback text-red-400 text-sm mt-1">Si us plau, introdueix el teu primer cognom.</div>
+  </div>
+</div>
+
+<div class="mb-6">
+  <label class="block text-sm font-semibold text-gray-900 mb-2">Segon Cognom</label>
+  <input type="text" name="lastName2" value={initialData?.lastName2 || ""} placeholder="Segon Cognom" class={`${baseInput} ${activeInput}`} />
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="mb-6">
+    <label class="block text-sm font-semibold text-gray-900 mb-2">DNI / NIE</label>
+    <input type="text" name="dni" value={initialData?.dni || ""} placeholder="DNI / NIE" required={!isProfile} disabled={isProfile} class={`${baseInput} ${isProfile ? disabledInput : activeInput}`} />
+    {!isProfile && <div class="empty-feedback invalid-feedback text-red-400 text-sm mt-1">Si us plau, introdueix el teu DNI.</div>}
+  </div>
+
+  <div class="mb-6">
+    <label class="block text-sm font-semibold text-gray-900 mb-2">Telèfon</label>
+    <input type="tel" name="phone" value={initialData?.phone || ""} placeholder="Telèfon" class={`${baseInput} ${activeInput}`} />
+  </div>
+</div>
+
+<div class="mb-6">
+  <label class="block text-sm font-semibold text-gray-900 mb-2">Correu electrònic</label>
+  <input type="email" name="email" value={initialData?.email || ""} placeholder="Correu electrònic" required={!isProfile} disabled={isProfile} class={`${baseInput} ${isProfile ? disabledInput : activeInput}`} />
+  {!isProfile && <div class="empty-feedback invalid-feedback text-red-400 text-sm mt-1">Si us plau, introdueix el teu correu.</div>}
+</div>
+
+<div class="mb-6">
+  <label class="block text-sm font-semibold text-gray-900 mb-2">Data de naixement</label>
+  <input type="date" name="birthDate" value={formattedBirthDate} required class={`${baseInput} ${activeInput} text-gray-700`} />
+  <div class="empty-feedback invalid-feedback text-red-400 text-sm mt-1">Si us plau, indica la teva data de naixement.</div>
+</div>
+
+<script>
+  // Aquest script només gestiona la previsualització un cop l'usuari tria un arxiu
+  const imageInput = document.getElementById('profile-image-input') as HTMLInputElement;
+  const previewImg = document.getElementById('profile-picture-preview') as HTMLImageElement;
+  const placeholder = document.getElementById('profile-placeholder') as HTMLSpanElement;
+
+  if (imageInput && previewImg && placeholder) {
+    imageInput.addEventListener('change', function(e) {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const pictureWrapper = previewImg.closest('picture');
+          
+          if (pictureWrapper) {
+            pictureWrapper.querySelectorAll('source').forEach(source => source.remove());
+          }
+          
+  
+          previewImg.classList.remove('hidden');
+          previewImg.removeAttribute('srcset');
+          
+          previewImg.src = e.target?.result as string;
+          placeholder.classList.add('hidden');
+        }
+        reader.readAsDataURL(target.files[0]);
+      }
+    });
+  }
+</script>
+
+<style is:global>
+  .invalid-feedback, .empty-feedback { display: none; }
+  .was-validated :placeholder-shown:invalid ~ .empty-feedback { display: block; }
+  .was-validated :not(:placeholder-shown):invalid ~ .invalid-feedback { display: block; }
+  .is-invalid, .was-validated :invalid { border-color: #dc3545; }
+</style>

@@ -1,0 +1,85 @@
+---
+// src/pages/admin/roles/create.astro
+import Layout from "../../../layouts/Layout.astro";
+import Container from "../../../components/ui/Container.astro";
+import SectionHead from "../../../components/ui/SectionHead.astro";
+import RoleForm from "../../../components/roles/RoleFields.astro";
+import { getRoleFormData } from "../../../services/rolesService";
+
+const cookie = Astro.request.headers.get("cookie");
+// If there is no cookie, pass undefined to match the expected type
+const headers: Record<string, string> | undefined = cookie ? { Cookie: cookie } : undefined;
+const { modules, actions, sections } = await getRoleFormData(headers);
+---
+
+<Layout title="Crear Nou Rol">
+  <Container>
+    <div class="max-w-4xl mx-auto mt-10">
+      
+      <div class="mb-6">
+        <a href="/admin/roles" class="text-indigo-600 hover:text-indigo-800 font-medium text-sm flex items-center gap-1 transition-colors">
+          &larr; Tornar a Roles
+        </a>
+      </div>
+
+      <SectionHead 
+        title="Crear Nou Rol i Assignar Permisos" 
+        description="Defineix el nom del rol i afegeix els permisos d'accés abans de desar." 
+      />
+
+      <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200 mt-8">
+        <RoleForm 
+          modules={modules} 
+          actions={actions} 
+          sections={sections} 
+        />
+      </div>
+
+    </div>
+  </Container>
+</Layout>
+
+<script>
+  import { createRole, addPermissionToRole } from "../../../services/rolesService";
+
+  const form = document.getElementById("role-form");
+
+  if (form) {
+    // Escoltem l'esdeveniment personalitzat emes pel component RoleForm
+    form.addEventListener("role-form-submit", async (e: any) => {
+      // Extraiem les dades i les funcions de control visual
+      const { description, permissions, showError, resetButton } = e.detail;
+
+      try {
+        // PAS 1: Crear el Rol
+        const newRole = await createRole(description);
+        const roleId = newRole.id;
+
+        // PAS 2: Afegir els permisos al nou rol
+        if (permissions.length > 0) {
+          const permissionPromises = permissions.map((p: any) => {
+            return addPermissionToRole({
+              roleId,
+              moduleId: p.moduleId,
+              actionId: p.actionId,
+              sectionId: p.sectionId
+            });
+          });
+          await Promise.all(permissionPromises);
+        }
+
+        // Redirigimos si hay éxito
+        window.location.href = "/admin/roles";
+        
+      } catch (err: any) {
+        // Si hi ha error a l'API, li diem al component que el mostri
+        showError(err.message);
+        resetButton();
+        
+        if (err.message.toLowerCase().includes("autenticat") || err.message.toLowerCase().includes("denegat")) {
+          setTimeout(() => window.location.href = '/login', 2500);
+        }
+      }
+    });
+  }
+</script>

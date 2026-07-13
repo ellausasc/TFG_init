@@ -1,0 +1,85 @@
+# ==========================================
+# 1. TIPUS DE DADES (TYPES)
+# ==========================================
+
+type Module {
+  id: ID!
+  name: String!
+  description: String
+}
+
+type Action {
+  id: ID!
+  action: String!
+  description: String!
+}
+
+type RolePermission {
+  id: ID!
+  role: Role!
+  module: Module!
+  action: Action!
+  section: Section # Es opcional, ya que puede ser un permiso global
+}
+
+type Role {
+  id: ID!
+  description: String!
+  users: [User!]!
+  permission: [RolePermission!]!
+}
+
+# ==========================================
+# 2. INPUTS (Dades d'entrada per a mutacions)
+# ==========================================
+
+input CreateRoleInput {
+  description: String!
+}
+
+input UpdateRoleInput {
+  description: String!
+}
+
+input AddPermissionToRoleInput {
+  roleId: ID!
+  moduleId: ID!
+  actionId: ID!
+  sectionId: ID # Opcional: Si se envía null, el permiso aplica a todo el módulo
+}
+
+# ==========================================
+# 3. QUERIES (Lectura)
+# ==========================================
+
+extend type Query {
+  # Consultas para Roles
+  getAllRoles: [Role]
+  getRoleById(id: ID!): Role
+  getUserRoles(userId: ID!): [Role]
+  
+  # Consultas para Módulos y Acciones (Solo lectura, vienen del sistema)
+  getAllModules: [Module!]!
+  getAllActions: [Action!]!
+}
+
+# ==========================================
+# 4. MUTACIONS (Escriptura / Modificacio)
+# ==========================================
+
+extend type Mutation {
+  # --- Gestión de Roles ---
+  createRole(input: CreateRoleInput!): Role!
+  updateRole(id: ID!, input: UpdateRoleInput!): Role!
+  deleteRole(id: ID!): Boolean! # Retorna true si se eliminó correctamente
+
+  # --- Asignación de Usuarios a Roles ---
+  assignRoleToUser(userId: ID!, roleId: ID!): Boolean!
+  removeRoleFromUser(userId: ID!, roleId: ID!): Boolean!
+
+  # --- Gestión de Permisos dentro de un Rol ---
+  addPermissionToRole(input: AddPermissionToRoleInput!): RolePermission!
+  
+  # Para eliminar un permiso, solo necesitamos el ID del RolePermission generado
+  removePermissionFromRole(permissionId: ID!): Boolean!
+}

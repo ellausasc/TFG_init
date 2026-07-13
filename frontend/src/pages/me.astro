@@ -1,0 +1,41 @@
+---
+// src/pages/me.astro
+import Layout from "../layouts/Layout.astro";
+import Container from "../components/ui/Container.astro";
+import SectionHead from "../components/ui/SectionHead.astro";
+import UserProfile from "../components/users/UserProfile.astro";
+import { getMe } from "../services/usersService";
+
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/login");
+}
+
+const token = Astro.cookies.get("token")?.value;
+const headers: Record<string, string> = token ? { "Cookie": `token=${token}` } 
+  : {};
+
+// 2. OBTENCIÓ DE DADES (SSR)
+let user = null;
+try {
+  user = await getMe(headers);
+} catch (error) {
+  // Si el token és invàlid (caducat o mal format), netegem la cookie
+  Astro.cookies.delete("token", { path: '/' });
+  return Astro.redirect("/login");
+}
+---
+
+<Layout title="El meu Perfil">
+  <Container>
+    <SectionHead>
+      <Fragment slot="title">El meu Perfil</Fragment>
+      <Fragment slot="desc">
+        Consulta i gestiona la teva informació personal.
+      </Fragment>
+    </SectionHead>
+  </Container>
+  
+  <Container class="pt-16 pb-24">
+    <UserProfile user={user} />
+  </Container>
+</Layout>
