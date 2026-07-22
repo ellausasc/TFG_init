@@ -14,7 +14,6 @@ type News {
   # Relaciones
   author: User!
   section: Section!
-  mainPageOf: Section
 }
 
 input CreateNewsInput {

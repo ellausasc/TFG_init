@@ -6,14 +6,14 @@ const PUBLIC_CONDITION = { status: 'PUBLISHED' };
 
 // La News de Prisma no te camps escalars "mainImage"/"secondaryImage": les
 // imatges es guarden com a registres de la relacio `documents`, diferenciats
-// pel seu `role` (MAIN_IMAGE / SECONDARY_IMAGE).
+// pel seu `usage` (MAIN_IMAGE / SECONDARY_IMAGE).
 const buildImageDocuments = (input) => {
   const documents = [];
   if (input.mainImage) {
-    documents.push({ name: 'Imatge principal', url: input.mainImage, type: 'image', role: 'MAIN_IMAGE' });
+    documents.push({ name: 'Imatge principal', url: input.mainImage, type: 'image', usage: 'MAIN_IMAGE' });
   }
   if (input.secondaryImage) {
-    documents.push({ name: 'Imatge secundaria', url: input.secondaryImage, type: 'image', role: 'SECONDARY_IMAGE' });
+    documents.push({ name: 'Imatge secundaria', url: input.secondaryImage, type: 'image', usage: 'SECONDARY_IMAGE' });
   }
   return documents;
 };
@@ -39,9 +39,7 @@ const getFiltered = async ({ filter, sort, page, limit }, visibility) => {
   const pageSize = limit || 10;
   const skip = (currentPage - 1) * pageSize;
 
-  let where = {
-    mainPageOfId: null,
-  };
+  let where = {};
 
   // Construccio dinamica de filtres
   if (filter) {
@@ -119,14 +117,14 @@ const update = async (id, input) => {
   }
 
   // mainImage/secondaryImage no son camps escalars a Prisma: si venen a
-  // l'input, substituim el document existent d'aquell rol (si n'hi ha) pel nou
-  const rolesToReplace = [];
-  if (input.mainImage !== undefined) rolesToReplace.push('MAIN_IMAGE');
-  if (input.secondaryImage !== undefined) rolesToReplace.push('SECONDARY_IMAGE');
+  // l'input, substituim el document existent d'aquell usage (si n'hi ha) pel nou
+  const usagesToReplace = [];
+  if (input.mainImage !== undefined) usagesToReplace.push('MAIN_IMAGE');
+  if (input.secondaryImage !== undefined) usagesToReplace.push('SECONDARY_IMAGE');
 
-  if (rolesToReplace.length > 0) {
+  if (usagesToReplace.length > 0) {
     dataToUpdate.documents = {
-      deleteMany: { role: { in: rolesToReplace } },
+      deleteMany: { usage: { in: usagesToReplace } },
       create: buildImageDocuments(input),
     };
   }

@@ -137,7 +137,7 @@ async function main() {
       longDescription: 'Revisio general de moduls, rols i permisos carregats al sistema.',
       slug: 'reunio-inicialitzacio',
       activityDate: new Date(new Date().setDate(new Date().getDate() + 7)),
-      status: true,
+      status: 'PUBLISHED',
       authorId: adminUser.id,
       sectionId: defaultSection.id,
     }

@@ -4,13 +4,13 @@ const { getVisibility } = require("../../utils/utils");
 
 // El formateig de dates es queda aqui perque es una necessitat especifica de GraphQL.
 // A mes, com que Prisma no te camps escalars "mainImage"/"secondaryImage" a
-// News (es guarden com a Documents amb role MAIN_IMAGE/SECONDARY_IMAGE),
+// News (es guarden com a Document amb usage MAIN_IMAGE/SECONDARY_IMAGE),
 // aqui es reconstrueixen aquests dos camps plans que espera l'esquema GraphQL.
 const formatNews = (news) => {
   if (!news) return null;
   const documents = news.documents || [];
-  const mainImageDoc = documents.find((doc) => doc.role === 'MAIN_IMAGE');
-  const secondaryImageDoc = documents.find((doc) => doc.role === 'SECONDARY_IMAGE');
+  const mainImageDoc = documents.find((doc) => doc.usage === 'MAIN_IMAGE');
+  const secondaryImageDoc = documents.find((doc) => doc.usage === 'SECONDARY_IMAGE');
 
   return {
     ...news,

@@ -13,11 +13,12 @@ datasource db {
 
 enum ActivityType {
   GENERAL
+  TALLER
   ASSEMBLEA
   JUNTA
 }
 
-enum DocumentRole {
+enum DocumentUsage {
   PROFILE_IMAGE
   MAIN_IMAGE
   SECONDARY_IMAGE
@@ -45,7 +46,7 @@ model User {
   enrolledActivities Activity[] @relation("Enrollments")
 
   // Relació 1:1 amb el document que fa de foto de perfil
-  profileDocument Documents?
+  profileDocument Document?
 }
 
 model Role {
@@ -129,12 +130,11 @@ model News {
   sectionId Int
   section   Section @relation(fields: [sectionId], references: [id])
 
-  // Relació 1:1
-  mainPageOfId Int?
-  mainPageOf   Section? @relation("MainNews")
+  // Relació 1:1 (part inversa; la FK viu a Section.mainNewsId)
+  mainPageOf Section? @relation("MainNews")
 
-  // Relacions 1:N (imatges principal/secundària via Documents.role)
-  documents Documents[]
+  // Relacions 1:N (imatges principal/secundària via Document.usage)
+  documents Document[]
 }
 
 model Activity {
@@ -144,12 +144,13 @@ model Activity {
   longDescription       String
   createdAt             DateTime     @default(now())
   publishedAt           DateTime?
-  status                Boolean      @default(false)
+  status                String?
   type                  ActivityType @default(GENERAL)
   isPrivate             Boolean      @default(false)
   activityDate          DateTime
   registrationStartDate DateTime?
   registrationEndDate   DateTime?
+  capacity              Int?
   slug                  String       @unique
 
   // Relacions N:1
@@ -159,19 +160,19 @@ model Activity {
   section   Section @relation(fields: [sectionId], references: [id])
 
   // Relacions 1:N (imatges + adjunts, incloent-hi les juntes via type=JUNTA)
-  documents Documents[]
+  documents Document[]
 
   // Relacions M:N
   participants User[] @relation("Enrollments")
 }
 
-model Documents {
-  id        Int          @id @default(autoincrement())
+model Document {
+  id        Int           @id @default(autoincrement())
   name      String
   url       String
   type      String
-  role      DocumentRole @default(ATTACHMENT)
-  createdAt DateTime     @default(now())
+  usage     DocumentUsage @default(ATTACHMENT)
+  createdAt DateTime      @default(now())
 
   // Propietari: com a màxim UN dels tres camps següents ha d'estar informat
   // (relació polimòrfica validada a nivell d'aplicació; Prisma no suporta

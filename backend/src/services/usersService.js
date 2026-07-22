@@ -16,13 +16,13 @@ const getMe = async (userId) => {
 
 // L'User de Prisma no te un camp escalar "profileImage": la imatge de perfil
 // es guarda com un registre de la relacio 1:1 `profileDocument`, amb
-// role: PROFILE_IMAGE. Aquesta funcio construeix aquest registre a partir de
+// usage: PROFILE_IMAGE. Aquesta funcio construeix aquest registre a partir de
 // la URL rebuda de GraphQL.
 const buildProfileImageDocument = (url) => ({
   name: 'Imatge de perfil',
   url,
   type: 'image',
-  role: 'PROFILE_IMAGE',
+  usage: 'PROFILE_IMAGE',
 });
 
 const registerUser = async (input) => {
@@ -111,7 +111,7 @@ const updateUser = async (id, input, currentUserId) => {
   Object.keys(dataToUpdate).forEach(key => dataToUpdate[key] === undefined && delete dataToUpdate[key]);
 
   // profileImage no es un camp escalar: si ve a l'input, creem o actualitzem
-  // el document de rol PROFILE_IMAGE (o l'esborrem si s'envia buit/null)
+  // el document d'usage PROFILE_IMAGE (o l'esborrem si s'envia buit/null)
   if (input.profileImage !== undefined) {
     dataToUpdate.profileDocument = input.profileImage
       ? {

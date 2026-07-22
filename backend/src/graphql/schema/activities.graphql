@@ -5,11 +5,12 @@ type Activity {
   longDescription: String!
   createdAt: String!
   publishedAt: String
-  status: Boolean!
+  status: String
   type: String
   activityDate: String!
   registrationStartDate: String
   registrationEndDate: String
+  capacity: Int
   mainImage: String
   secondaryImage: String
   slug: String!
@@ -23,12 +24,13 @@ input CreateActivityInput {
   title: String!
   shortDescription: String!
   longDescription: String!
-  status: Boolean
+  status: String
   type: String
   isPrivate: Boolean
   activityDate: String!
   registrationStartDate: String
   registrationEndDate: String
+  capacity: Int
   mainImage: String
   secondaryImage: String
   sectionId: Int!

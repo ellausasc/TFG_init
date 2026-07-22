@@ -11,7 +11,7 @@ if (!Astro.cookies.has("token")) {
 }
 
 // Calculem quins tipus d'activitat pot crear l'usuari segons els seus permisos:
-// el modul ACTIVITIES nomes permet el tipus GENERAL; el modul ASSEMBLY
+// el modul ACTIVITIES permet els tipus GENERAL i TALLER; el modul ASSEMBLY
 // permet els altres dos (ASSEMBLEA i JUNTA).
 const token = Astro.cookies.get("token")!.value;
 let userPerms: string[] = [];
@@ -29,7 +29,12 @@ const hasModulePermission = (moduleName: string) =>
   });
 
 const allowedTypes = [
-  ...(hasModulePermission("ACTIVITIES") ? [{ value: "GENERAL", label: "General" }] : []),
+  ...(hasModulePermission("ACTIVITIES")
+    ? [
+        { value: "GENERAL", label: "General" },
+        { value: "TALLER", label: "Taller" },
+      ]
+    : []),
   ...(hasModulePermission("ASSEMBLY")
     ? [
         { value: "ASSEMBLEA", label: "Assemblea" },
@@ -75,15 +80,17 @@ const allowedTypes = [
     // Control de les dates opcionals
     const regStart = formData.get("registrationStartDate") as string;
     const regEnd = formData.get("registrationEndDate") as string;
+    const capacityValue = formData.get("capacity") as string;
 
     const input = {
       title: formData.get("title"),
       shortDescription: shortDescInput?.value || "",
       longDescription: longDescInput?.value || "",
       sectionId: parseInt(formData.get("sectionId") as string),
-      status: formData.get("status") === "on", // GraphQL espera un Boolean
+      status: formData.get("status") === "on" ? "PUBLISHED" : "DRAFT", // GraphQL espera un String
       type: formData.get("type"),
       isPrivate: formData.get("isPrivate") === "on",
+      capacity: capacityValue ? parseInt(capacityValue) : null,
       activityDate: new Date(formData.get("activityDate") as string).toISOString(),
       registrationStartDate: regStart ? new Date(regStart).toISOString() : null,
       registrationEndDate: regEnd ? new Date(regEnd).toISOString() : null,
@@ -92,7 +99,6 @@ const allowedTypes = [
     };
 
     const result = document.getElementById("activity-result");
-    const token = localStorage.getItem("token") || "";
 
     try {
       result!.innerText = "Creant activitat...";

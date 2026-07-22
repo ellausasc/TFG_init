@@ -25,12 +25,13 @@ const title = Astro.url.searchParams.get("title");
 const sectionId = Astro.url.searchParams.get("sectionId");
 
 // 2. Construim el filtre. Aquest llistat d'administracio nomes mostra
-// activitats de tipus GENERAL: les Assemblees i Juntes tenen (o tindran) el
-// seu propi espai d'administracio i no s'han de barrejar aqui.
+// activitats dels tipus GENERAL i TALLER (modul ACTIVITIES): les Assemblees
+// i Juntes tenen el seu propi espai d'administracio i no s'han de barrejar
+// aqui.
 const filter: any = {};
 if (title) filter.title = title;
 if (sectionId) filter.sectionId = parseInt(sectionId);
-filter.type = "GENERAL";
+filter.types = ["GENERAL", "TALLER"];
 
 // 3. Cridem el servei passant la galeta de sessio. El backend (graphql-shield
 // + canViewActivities) segueix aplicant el filtre de visibilitat segons els
@@ -51,7 +52,7 @@ const getPaginationUrl = (newPage: number) => {
       <SectionHead align="left">
         <Fragment slot="title">Totes les activitats</Fragment>
         <Fragment slot="desc">
-          Consulta i gestiona les activitats de tipus general que els teus permisos et permeten veure.
+          Consulta i gestiona les activitats i tallers que els teus permisos et permeten veure.
         </Fragment>
       </SectionHead>
 

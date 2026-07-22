@@ -82,11 +82,12 @@ export interface Activity {
   longDescription: string;
   createdAt: string;
   publishedAt?: string;
-  status: boolean;
+  status?: string;
   type?: string;
   activityDate: string;
   registrationStartDate?: string;
   registrationEndDate?: string;
+  capacity?: number;
   mainImage?: string;
   secondaryImage?: string;
   slug: string;
@@ -130,11 +131,12 @@ export interface CreateActivityInput {
   title: string;
   shortDescription: string;
   longDescription: string;
-  status?: boolean;
+  status?: string;
   type?: string;
   activityDate: string;
   registrationStartDate?: string | null;
   registrationEndDate?: string | null;
+  capacity?: number | null;
   mainImage?: string;
   secondaryImage?: string;
   sectionId: number;
@@ -145,7 +147,7 @@ export interface ActivityFilterInput {
   sectionId?: number;
   authorId?: number;
   location?: string;
-  status?: string | boolean;
+  status?: string;
   type?: string;
   types?: string[];
 }

@@ -58,7 +58,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
       : `${endpoint}/${bucketName}/${fileName}`;
 
     // Desem a la base de dades
-    const savedDocument = await prisma.documents.create({
+    const savedDocument = await prisma.document.create({
       data: {
         name: file.originalname,
         url: urlToSave,

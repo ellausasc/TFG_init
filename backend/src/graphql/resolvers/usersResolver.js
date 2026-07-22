@@ -1,7 +1,7 @@
 const usersService = require('../../services/usersService');
 
 // L'User de Prisma no te un camp escalar "profileImage": es guarda com un
-// document relacionat (role: PROFILE_IMAGE). Aqui es reconstrueix el camp
+// document relacionat (usage: PROFILE_IMAGE). Aqui es reconstrueix el camp
 // pla que espera l'esquema GraphQL.
 const formatUser = (user) => {
   if (!user) return null;

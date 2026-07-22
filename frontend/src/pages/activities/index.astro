@@ -14,11 +14,13 @@ const page = parseInt(Astro.url.searchParams.get("page") || "1");
   const title = Astro.url.searchParams.get("title");
   const sectionId = Astro.url.searchParams.get("sectionId");
 
-  // 2. Construim el filtre
+  // 2. Construim el filtre. Aquest llistat public mostra tant activitats
+  // GENERAL com TALLER (modul ACTIVITIES); les Juntes i Assemblees tenen el
+  // seu propi espai i no es publiques per defecte.
 const filter: any = {};
 if (title) filter.title = title;
 if (sectionId) filter.sectionId = parseInt(sectionId);
-filter.type = "GENERAL";
+filter.types = ["GENERAL", "TALLER"];
 
 // 3. Llamamos al servicio de actividades
 const { items: publishedActivities } = await getActivities({

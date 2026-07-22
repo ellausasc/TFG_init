@@ -2,19 +2,20 @@ const utils = require("../utils/utils");
 const activitiesRepository = require("../repositories/activitiesRepository");
 
 // Condicio "publica" comuna, sense el tipus: publicada i no marcada com a privada
-const PUBLIC_CONDITION_BASE = { status: true, isPrivate: false };
+const PUBLIC_CONDITION_BASE = { status: 'PUBLISHED', isPrivate: false };
 
-// El tipus GENERAL depen del modul ACTIVITIES; ASSEMBLEA i JUNTA depenen del
-// modul ASSEMBLY (igual que a `canCreateActivity`, a rules.js). Per aixo la
-// visibilitat de lectura no es un unic domini, sino dos, que cal combinar
-// amb un OR tenint en compte a quin tipus pertany cada activitat.
+// Els tipus GENERAL i TALLER depenen del modul ACTIVITIES; ASSEMBLEA i JUNTA
+// depenen del modul ASSEMBLY (igual que a `canCreateActivity`, a rules.js).
+// Per aixo la visibilitat de lectura no es un unic domini, sino dos, que cal
+// combinar amb un OR tenint en compte a quin tipus pertany cada activitat.
 //
-// `allowPublicFallback` nomes te sentit per a GENERAL: existeix una pagina
-// publica (/activities) pensada perque qualsevol visitant (fins i tot sense
-// cap permis) hi vegi les activitats publicades. Les Juntes/Assemblees no
-// tenen cap pagina publica equivalent, per aixo per a ASSEMBLY es desactiva
-// aquest "fallback": sense permis (total o de seccio) sobre ASSEMBLY, l'usuari
-// no veu cap Junta ni Assemblea, independentment de si son "publiques".
+// `allowPublicFallback` nomes te sentit per a GENERAL/TALLER: existeix una
+// pagina publica (/activities) pensada perque qualsevol visitant (fins i tot
+// sense cap permis) hi vegi les activitats publicades. Les Juntes/Assemblees
+// no tenen cap pagina publica equivalent, per aixo per a ASSEMBLY es
+// desactiva aquest "fallback": sense permis (total o de seccio) sobre
+// ASSEMBLY, l'usuari no veu cap Junta ni Assemblea, independentment de si
+// son "publiques".
 const buildTypeVisibilityCondition = (types, domainVisibility, allowPublicFallback = true) => {
   const typeCondition = types.length === 1 ? { type: types[0] } : { type: { in: types } };
 
@@ -39,13 +40,13 @@ const buildTypeVisibilityCondition = (types, domainVisibility, allowPublicFallba
   return publicCondition || { id: -1 };
 };
 
-// Combina la visibilitat dels dos dominis (GENERAL i ASSEMBLEA/JUNTA) en un
-// unic filtre "where" i el combina amb els filtres propis de la consulta
-// (titol, seccio, etc.) mitjancant un AND.
+// Combina la visibilitat dels dos dominis (GENERAL/TALLER i ASSEMBLEA/JUNTA)
+// en un unic filtre "where" i el combina amb els filtres propis de la
+// consulta (titol, seccio, etc.) mitjancant un AND.
 const applyActivityVisibilityFilter = (where, activityVisibility) => {
   const visibilityFilter = {
     OR: [
-      buildTypeVisibilityCondition(['GENERAL'], activityVisibility.GENERAL, true),
+      buildTypeVisibilityCondition(['GENERAL', 'TALLER'], activityVisibility.GENERAL, true),
       buildTypeVisibilityCondition(['ASSEMBLEA', 'JUNTA'], activityVisibility.ASSEMBLY, false),
     ],
   };
@@ -55,15 +56,15 @@ const applyActivityVisibilityFilter = (where, activityVisibility) => {
 
 // L'Activity de Prisma no te camps escalars "mainImage"/"secondaryImage": les
 // imatges es guarden com a registres de la relacio `documents`, diferenciats
-// pel seu `role` (MAIN_IMAGE / SECONDARY_IMAGE). Aquesta funcio construeix la
-// llista de documents a crear a partir de l'input rebut de GraphQL.
+// pel seu `usage` (MAIN_IMAGE / SECONDARY_IMAGE). Aquesta funcio construeix
+// la llista de documents a crear a partir de l'input rebut de GraphQL.
 const buildImageDocuments = (input) => {
   const documents = [];
   if (input.mainImage) {
-    documents.push({ name: 'Imatge principal', url: input.mainImage, type: 'image', role: 'MAIN_IMAGE' });
+    documents.push({ name: 'Imatge principal', url: input.mainImage, type: 'image', usage: 'MAIN_IMAGE' });
   }
   if (input.secondaryImage) {
-    documents.push({ name: 'Imatge secundaria', url: input.secondaryImage, type: 'image', role: 'SECONDARY_IMAGE' });
+    documents.push({ name: 'Imatge secundaria', url: input.secondaryImage, type: 'image', usage: 'SECONDARY_IMAGE' });
   }
   return documents;
 };
@@ -95,8 +96,10 @@ const getFiltered = async ({ filter, sort, page, limit }, activityVisibility) =>
     if (filter.authorId) where.authorId = parseInt(filter.authorId);
     if (filter.type) where.type = filter.type;
     if (filter.types && filter.types.length > 0) where.type = { in: filter.types };
+    // `status` es un String ('DRAFT' | 'PUBLISHED', igual que a News), ja no
+    // cal cap conversio a booleana.
     if (filter.status !== undefined && filter.status !== null) {
-      where.status = filter.status === 'true' || filter.status === true;
+      where.status = filter.status;
     }
   }
   where = applyActivityVisibilityFilter(where, activityVisibility);
@@ -123,12 +126,13 @@ const create = async (input, userId) => {
     title: input.title,
     shortDescription: input.shortDescription,
     longDescription: input.longDescription,
-    status: input.status !== undefined ? input.status : false,
+    status: input.status !== undefined ? input.status : 'DRAFT',
     type: input.type,
+    capacity: input.capacity !== undefined ? input.capacity : null,
     // Les Juntes i Assemblees son contingut intern per defecte; les activitats
-    // GENERAL son publiques per defecte. Si l'input especifica isPrivate
+    // GENERAL/TALLER son publiques per defecte. Si l'input especifica isPrivate
     // explicitament, es respecta igualment (permet fer una Junta publica).
-    isPrivate: input.isPrivate !== undefined ? input.isPrivate : (input.type !== 'GENERAL'),
+    isPrivate: input.isPrivate !== undefined ? input.isPrivate : !['GENERAL', 'TALLER'].includes(input.type),
     slug: generatedSlug,
     activityDate: new Date(input.activityDate),
     registrationStartDate: input.registrationStartDate ? new Date(input.registrationStartDate) : null,
@@ -163,14 +167,14 @@ const update = async (id, input) => {
   if (input.registrationEndDate !== undefined) dataToUpdate.registrationEndDate = input.registrationEndDate ? new Date(input.registrationEndDate) : null;
 
   // mainImage/secondaryImage no son camps escalars a Prisma: si venen a
-  // l'input, substituim el document existent d'aquell rol (si n'hi ha) pel nou
-  const rolesToReplace = [];
-  if (input.mainImage !== undefined) rolesToReplace.push('MAIN_IMAGE');
-  if (input.secondaryImage !== undefined) rolesToReplace.push('SECONDARY_IMAGE');
+  // l'input, substituim el document existent d'aquell usage (si n'hi ha) pel nou
+  const usagesToReplace = [];
+  if (input.mainImage !== undefined) usagesToReplace.push('MAIN_IMAGE');
+  if (input.secondaryImage !== undefined) usagesToReplace.push('SECONDARY_IMAGE');
 
-  if (rolesToReplace.length > 0) {
+  if (usagesToReplace.length > 0) {
     dataToUpdate.documents = {
-      deleteMany: { role: { in: rolesToReplace } },
+      deleteMany: { usage: { in: usagesToReplace } },
       create: buildImageDocuments(input)
     };
   }

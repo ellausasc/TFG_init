@@ -47,12 +47,13 @@ const isOwner = rule({ cache: 'strict' })(async (parent, args, ctx) => {
   return args.id.toString() === ctx.userId.toString();
 });
 
-// El modul ACTIVITIES nomes permet crear activitats de tipus GENERAL; el
+// El modul ACTIVITIES permet crear activitats de tipus GENERAL i TALLER; el
 // modul ASSEMBLY es el que permet crear els altres dos tipus (ASSEMBLEA i
 // JUNTA). Aquesta regla mira el `type` que ve a l'input i decideix, en temps
 // d'execucio, quin dels dos moduls cal comprovar.
 const ACTIVITY_TYPE_MODULES = {
   GENERAL: 'ACTIVITIES',
+  TALLER: 'ACTIVITIES',
   ASSEMBLEA: 'ASSEMBLY',
   JUNTA: 'ASSEMBLY',
 };
@@ -136,9 +137,9 @@ const computeDomainVisibility = (ctx, moduleName) => {
   return { restrictedToPublic: true, visibleSectionIds };
 };
 
-// Les activitats no es reparteixen la visibilitat en un unic modul: el tipus
-// GENERAL depen del modul ACTIVITIES, mentre que ASSEMBLEA i JUNTA depenen
-// del modul ASSEMBLY, igual que a `canCreateActivity`).
+// Les activitats no es reparteixen la visibilitat en un unic modul: els
+// tipus GENERAL i TALLER depenen del modul ACTIVITIES, mentre que ASSEMBLEA
+// i JUNTA depenen del modul ASSEMBLY, igual que a `canCreateActivity`).
 // Aquesta regla mai bloqueja la consulta: calcula la visibilitat de cada
 // domini per separat i la deixa a ctx.activityVisibility perque el service
 // combini els dos filtres amb un OR segons el tipus de cada activitat.

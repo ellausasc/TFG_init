@@ -12,11 +12,13 @@ interface Props {
   showType?: boolean;
   showImages?: boolean;
   showIsPrivate?: boolean;
+  showCapacity?: boolean;
   allowedTypes?: { value: string; label: string }[];
 }
 
 const ALL_ACTIVITY_TYPES = [
   { value: "GENERAL", label: "General" },
+  { value: "TALLER", label: "Taller" },
   { value: "ASSEMBLEA", label: "Assemblea" },
   { value: "JUNTA", label: "Junta" },
 ];
@@ -32,6 +34,7 @@ const {
   showType = true,
   showImages = true,
   showIsPrivate = true,
+  showCapacity = true,
   // Si no s'indica cap restriccio (p.ex. en un context intern), es mostren tots els tipus
   allowedTypes = ALL_ACTIVITY_TYPES,
 } = Astro.props;
@@ -128,6 +131,20 @@ const {
   )}
 </div>
 
+{showCapacity && (
+  <div class="mb-6">
+    <label class="block text-sm font-semibold text-gray-900 mb-2">Aforament (opcional)</label>
+    <input 
+      type="number" 
+      name="capacity" 
+      min="1"
+      value={initialData?.capacity ?? ""} 
+      placeholder="Ex: 30" 
+      class="w-full px-4 py-3 border-2 border-gray-200 rounded-md focus:border-gray-800 outline-none transition" 
+    />
+  </div>
+)}
+
 {showImages && (
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <div class="mb-6">
@@ -179,10 +196,10 @@ const {
       type="checkbox" 
       id="status-checkbox" 
       name="status" 
-      checked={initialData?.status === true} 
+      checked={initialData?.status === "PUBLISHED"} 
       class="w-5 h-5 accent-gray-800" 
     />
-    <label for="status-checkbox" class="ml-2 text-sm font-medium text-gray-700">Activar (Status: True)</label>
+    <label for="status-checkbox" class="ml-2 text-sm font-medium text-gray-700">Publicar immediatament</label>
   </div>
 )}
 
