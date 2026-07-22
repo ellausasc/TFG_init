@@ -1,0 +1,9 @@
+---
+// src/pages/logout.astro
+
+// 1. Esborrem la galeta. És OBLIGATORI especificar el mateix 'path' amb el que es va crear.
+Astro.cookies.delete("token", { path: "/" });
+
+// 2. Redirigim l'usuari immediatament a la pàgina principal (o al login)
+return Astro.redirect("/");
+---

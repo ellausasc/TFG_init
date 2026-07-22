@@ -1,0 +1,151 @@
+---
+// src/pages/admin/roles/[id]/edit.astro
+import Layout from "../../../../layouts/Layout.astro";
+import Container from "../../../../components/ui/Container.astro";
+import SectionHead from "../../../../components/ui/SectionHead.astro";
+import RoleForm from "../../../../components/roles/RoleFields.astro";
+import RoleUsersAssignment from "../../../../components/roles/RoleUserAssignment.astro";
+import { getRoleFormData, getRoleById, getAllUsersBasic } from "../../../../services/rolesService";
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect('/admin/roles');
+
+const cookie = Astro.request.headers.get("cookie");
+const headers: Record<string, string> | undefined = cookie ? { Cookie: cookie } : undefined;
+
+// Executem les queries en paral·lel per anar ràpid
+const [formData, role, allUsers] = await Promise.all([
+  getRoleFormData(headers),
+  getRoleById(id, headers),
+  getAllUsersBasic(headers)
+]);
+
+if (!role) return Astro.redirect('/admin/roles');
+
+// Formatem els permisos que venen de la DB al format que espera el nostre formulari (RoleForm)
+const formattedPermissions = role.permission.map((p: any) => ({
+  id: p.id, // Guardem l'ID original per si s'ha d'esborrar
+  moduleId: p.module.id,
+  moduleName: p.module.name,
+  actionId: p.action.id,
+  actionName: p.action.description,
+  sectionId: p.section ? p.section.id : null,
+  sectionName: p.section ? p.section.name : "Global (Totes)"
+}));
+
+const initialData = {
+  description: role.description,
+  permissions: formattedPermissions
+};
+---
+
+<Layout title={`Editar Rol: ${role.description}`}>
+  <Container>
+    <div class="max-w-5xl mx-auto mt-10">
+      
+      <div class="mb-6">
+        <a href="/admin/roles" class="text-indigo-600 hover:text-indigo-800 font-medium text-sm flex items-center gap-1 transition-colors">
+          &larr; Tornar a Roles
+        </a>
+      </div>
+
+      <SectionHead 
+        title={`Modificar Rol: ${role.description}`} 
+        description="Gestiona les dades bàsiques, els permisos del sistema i els usuaris assignats a aquest rol." 
+      />
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+        
+        <div class="lg:col-span-2 bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+          <RoleForm 
+            modules={formData.modules} 
+            actions={formData.actions} 
+            sections={formData.sections} 
+            isEdit={true}
+            initialData={initialData}
+          />
+        </div>
+
+        <div class="lg:col-span-1">
+          <RoleUsersAssignment 
+            roleId={id} 
+            assignedUsers={role.users} 
+            allUsers={allUsers} 
+          />
+        </div>
+
+      </div>
+
+    </div>
+  </Container>
+</Layout>
+
+<script define:vars={{ roleId: id, originalPermissions: formattedPermissions }}>
+  // Definim les variables al window perquè el mòdul inferior les pugui llegir
+  window.roleId = roleId;
+  window.originalPermissions = originalPermissions;
+</script>
+
+<script>
+  import { updateRole, addPermissionToRole, removePermissionFromRole } from "../../../../services/rolesService";
+
+  const form = document.getElementById("role-form");
+
+  if (form) {
+    form.addEventListener("role-form-submit", async (e: any) => {
+      const { description, permissions: newPermissions, showError, resetButton } = e.detail;
+      const roleId = (window as any).roleId;
+      const originalPerms = (window as any).originalPermissions;
+
+      try {
+        // 1. Actualitzar el nom del rol
+        await updateRole(roleId, description);
+
+        // 2. Calcular la diferència de permisos (Diffing)
+        
+        // Quins s'han d'AFEGIR? (Estan als nous però no als originals)
+        const toAdd = newPermissions.filter((newP: any) => 
+          !originalPerms.some((origP: any) => 
+            origP.moduleId === newP.moduleId && 
+            origP.actionId === newP.actionId && 
+            origP.sectionId == newP.sectionId
+          )
+        );
+
+        // Quins s'han d'ELIMINAR? (Estan als originals però no als nous)
+        const toRemove = originalPerms.filter((origP: any) => 
+          !newPermissions.some((newP: any) => 
+            newP.moduleId === origP.moduleId && 
+            newP.actionId === origP.actionId && 
+            newP.sectionId == origP.sectionId
+          )
+        );
+
+        // 3. Executar eliminacions i creacions en paral·lel
+        const operations: Promise<any>[] = [];
+
+        toRemove.forEach((p: any) => {
+          operations.push(removePermissionFromRole(p.id));
+        });
+
+        toAdd.forEach((p: any) => {
+          operations.push(addPermissionToRole({
+            roleId,
+            moduleId: p.moduleId,
+            actionId: p.actionId,
+            sectionId: p.sectionId
+          }));
+        });
+
+        await Promise.all(operations);
+
+        // Redirigir si tot va bé
+        window.location.href = "/admin/roles";
+        
+      } catch (err: any) {
+        showError(err.message);
+        resetButton();
+      }
+    });
+  }
+</script>

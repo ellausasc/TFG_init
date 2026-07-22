@@ -1,0 +1,188 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ActivityType {
+  GENERAL
+  TALLER
+  ASSEMBLEA
+  JUNTA
+}
+
+enum DocumentUsage {
+  PROFILE_IMAGE
+  MAIN_IMAGE
+  SECONDARY_IMAGE
+  ATTACHMENT
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  code      String    @unique
+  firstName String
+  lastName1 String
+  lastName2 String?
+  dni       String    @unique
+  phone     String?
+  email     String    @unique
+  password  String
+  birthDate DateTime?
+  createdAt DateTime  @default(now()) // data_alta
+  deletedAt DateTime? // data_baixa
+
+  // Relacions
+  roles              Role[]
+  createdNews        News[]     @relation("AuthorNews")
+  createdActivities  Activity[] @relation("AuthorActivity")
+  enrolledActivities Activity[] @relation("Enrollments")
+
+  // Relació 1:1 amb el document que fa de foto de perfil
+  profileDocument Document?
+}
+
+model Role {
+  id          Int    @id @default(autoincrement())
+  description String @unique
+
+  // Relacions
+  users      User[]
+  permission RolePermission[]
+}
+
+model Module {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+
+  // Relacions
+  permission RolePermission[]
+}
+
+model Action {
+  id          Int    @id @default(autoincrement())
+  action      String @unique @db.Char(2)
+  description String @unique
+
+  // Relacions
+  permission RolePermission[]
+}
+
+model Section {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  publishedAt DateTime?
+  isActive    Boolean   @default(true)
+
+  //
+  mainNewsId Int?  @unique
+  mainNews   News? @relation("MainNews", fields: [mainNewsId], references: [id])
+
+  // Relacions
+  news       News[]
+  activities Activity[]
+  permission RolePermission[]
+}
+
+model RolePermission {
+  id Int @id @default(autoincrement())
+
+  // Claves Foráneas
+  roleId    Int
+  moduleId  Int
+  actionId  Int
+  sectionId Int? // Opcional: Puede haber permisos globales que no dependan de una sección
+
+  // Relaciones (Con onDelete: Cascade para que si borras un rol, se borren sus permisos)
+  role    Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  module  Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  action  Action   @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  section Section? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  // Restricción Única: Evita que asignes exactamente el mismo permiso dos veces al mismo rol
+  @@unique([roleId, moduleId, actionId, sectionId])
+}
+
+model News {
+  id               Int       @id @default(autoincrement())
+  title            String
+  shortDescription String
+  longDescription  String
+  createdAt        DateTime  @default(now())
+  publishedAt      DateTime?
+  status           String?
+  type             String?
+  slug             String    @unique
+
+  // Relacions N:1
+  authorId  Int
+  author    User    @relation("AuthorNews", fields: [authorId], references: [id])
+  sectionId Int
+  section   Section @relation(fields: [sectionId], references: [id])
+
+  // Relació 1:1 (part inversa; la FK viu a Section.mainNewsId)
+  mainPageOf Section? @relation("MainNews")
+
+  // Relacions 1:N (imatges principal/secundària via Document.usage)
+  documents Document[]
+}
+
+model Activity {
+  id                    Int          @id @default(autoincrement())
+  title                 String
+  shortDescription      String
+  longDescription       String
+  createdAt             DateTime     @default(now())
+  publishedAt           DateTime?
+  status                String?
+  type                  ActivityType @default(GENERAL)
+  isPrivate             Boolean      @default(false)
+  activityDate          DateTime
+  registrationStartDate DateTime?
+  registrationEndDate   DateTime?
+  capacity              Int?
+  slug                  String       @unique
+
+  // Relacions N:1
+  authorId  Int
+  author    User    @relation("AuthorActivity", fields: [authorId], references: [id])
+  sectionId Int
+  section   Section @relation(fields: [sectionId], references: [id])
+
+  // Relacions 1:N (imatges + adjunts, incloent-hi les juntes via type=JUNTA)
+  documents Document[]
+
+  // Relacions M:N
+  participants User[] @relation("Enrollments")
+}
+
+model Document {
+  id        Int           @id @default(autoincrement())
+  name      String
+  url       String
+  type      String
+  usage     DocumentUsage @default(ATTACHMENT)
+  createdAt DateTime      @default(now())
+
+  // Propietari: com a màxim UN dels tres camps següents ha d'estar informat
+  // (relació polimòrfica validada a nivell d'aplicació; Prisma no suporta
+  // una restricció XOR nativa entre múltiples claus foranies opcionals)
+  userId Int?  @unique
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  newsId Int?
+  news   News? @relation(fields: [newsId], references: [id], onDelete: Cascade)
+
+  activityId Int?
+  activity   Activity? @relation(fields: [activityId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,74 @@
+type Activity {
+  id: ID!
+  title: String!
+  shortDescription: String!
+  longDescription: String!
+  createdAt: String!
+  publishedAt: String
+  status: String
+  type: String
+  activityDate: String!
+  registrationStartDate: String
+  registrationEndDate: String
+  capacity: Int
+  mainImage: String
+  secondaryImage: String
+  slug: String!
+  
+  author: User!
+  section: Section!
+  participants: [User!]! # Llista d'usuaris inscrits
+}
+
+input CreateActivityInput {
+  title: String!
+  shortDescription: String!
+  longDescription: String!
+  status: String
+  type: String
+  isPrivate: Boolean
+  activityDate: String!
+  registrationStartDate: String
+  registrationEndDate: String
+  capacity: Int
+  mainImage: String
+  secondaryImage: String
+  sectionId: Int!
+}
+
+input ActivityFilterInput {
+  title: String
+  sectionId: ID
+  authorId: ID
+  location: String
+  status: String
+  type: String
+  types: [String!]
+}
+
+input SortInput {
+  field: String
+  direction: String # "ASC", "DESC"
+}
+
+type PaginatedActivities {
+  items: [Activity!]!
+  totalCount: Int!
+}
+
+extend type Query {
+  getAllActivities: [Activity!]!
+  getActivityBySlug(slug: String!): Activity
+  getFilteredActivities(
+    filter: ActivityFilterInput
+    sort: SortInput
+    page: Int
+    limit: Int
+  ): PaginatedActivities
+}
+
+extend type Mutation {
+  createActivity(input: CreateActivityInput!): Activity
+  updateActivity(id: ID!, input: CreateActivityInput!): Activity
+  enrollInActivity(activityId: ID!): Boolean! 
+}

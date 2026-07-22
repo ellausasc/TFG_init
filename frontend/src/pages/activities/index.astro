@@ -1,0 +1,89 @@
+---
+// src/pages/activities.astro
+import Layout from "../../layouts/Layout.astro";
+import SectionHead from "../../components/ui/SectionHead.astro";
+import Container from "../../components/ui/Container.astro";
+import CardActivity from "../../components/activities/ActivityCard.astro";
+import FilterActivities from "../../components/activities/ActivityFilters.astro";
+import { getActivities } from "../../services/activitiesService";
+
+export const prerender = false;
+
+// 1. Extraiem els parametres de la URL
+const page = parseInt(Astro.url.searchParams.get("page") || "1");
+  const title = Astro.url.searchParams.get("title");
+  const sectionId = Astro.url.searchParams.get("sectionId");
+
+  // 2. Construim el filtre. Aquest llistat public mostra tant activitats
+  // GENERAL com TALLER (modul ACTIVITIES); les Juntes i Assemblees tenen el
+  // seu propi espai i no es publiques per defecte.
+const filter: any = {};
+if (title) filter.title = title;
+if (sectionId) filter.sectionId = parseInt(sectionId);
+filter.types = ["GENERAL", "TALLER"];
+
+// 3. Llamamos al servicio de actividades
+const { items: publishedActivities } = await getActivities({
+  page,
+  limit: 10,
+  filter,
+});
+
+// Helper per construir URLs mantenint els filtres actuals
+const getPaginationUrl = (newPage: number) => {
+  const params = new URLSearchParams(Astro.url.searchParams);
+  params.set("page", newPage.toString());
+  return `?${params.toString()}`;
+};
+---
+
+<Layout title="Totes les Activitats">
+  <Container>
+    <SectionHead align="center">
+      <Fragment slot="title">Activitats</Fragment>
+      <Fragment slot="desc">
+        Descobreix totes les nostres propostes, tallers i esdeveniments.
+      </Fragment>
+    </SectionHead>
+
+    <FilterActivities />
+
+    <main class="mt-10 pb-24">
+      {
+        publishedActivities.length > 0 ? (
+          <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
+            {publishedActivities.map((activityEntry: any) => (
+              <CardActivity activityEntry={activityEntry} />
+            ))}
+          </ul>
+        ) : (
+          <div class="text-center py-20 rounded-md">
+            <h3 class="text-xl font-medium">
+              No s'han trobat activitats amb aquests filtres.
+            </h3>
+            <p class="text-gray-400 mt-2">Prova a canviar els criteris de cerca.</p>
+          </div>
+        )
+      }
+
+      <!-- Paginación -->
+      <div class="mt-12 flex justify-center items-center gap-6">
+        <a
+          href={getPaginationUrl(page - 1)}
+          class={`${page <= 1 ? "hidden" : "px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition"}`}
+        >
+          Anterior
+        </a>
+        
+        <span class="font-medium text-gray-700">Pàgina {page}</span>
+        
+        <a
+          href={getPaginationUrl(page + 1)}
+          class={`${publishedActivities.length < 10 ? "hidden" : "px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition"}`}
+        >
+          Següent
+        </a>
+      </div>
+    </main>
+  </Container>
+</Layout>

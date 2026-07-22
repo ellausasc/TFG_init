@@ -1,0 +1,86 @@
+---
+// src/pages/news.astro
+import Layout from "../../layouts/Layout.astro";
+import SectionHead from "../../components/ui/SectionHead.astro";
+import Container from "../../components/ui/Container.astro";
+import CardNews from "../../components/news/NewsCard.astro";
+import FilterNews from "../../components/news/NewsFilters.astro";
+import { getNews } from "../../services/newsService";
+
+export const prerender = false;
+
+// 1. Extraiem els parametres de la URL
+const page = parseInt(Astro.url.searchParams.get("page") || "1");
+const title = Astro.url.searchParams.get("title");
+const sectionId = Astro.url.searchParams.get("sectionId");
+
+// 2. Construim el filtre
+const filter: any = {};
+if (title) filter.title = title;
+if (sectionId) filter.sectionId = parseInt(sectionId);
+
+// 3. Llamamos al servicio
+const { items: publishedNews } = await getNews({
+  page,
+  limit: 10,
+  filter,
+});
+
+// Helper per construir URLs mantenint els filtres actuals
+const getPaginationUrl = (newPage: number) => {
+  const params = new URLSearchParams(Astro.url.searchParams);
+  params.set("page", newPage.toString());
+  return `?${params.toString()}`;
+};
+---
+
+<Layout title="Totes les Notícies">
+  <Container>
+    <SectionHead align="center">
+      <Fragment slot="title">Notícies</Fragment>
+      <Fragment slot="desc">
+        Estigues al dia de les últimes novetats, esdeveniments i comunicats.
+      </Fragment>
+    </SectionHead>
+
+    <FilterNews />
+
+    <main class="mt-10 pb-24">
+      {
+        publishedNews.length > 0 ? (
+          <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 w-full">
+            {publishedNews.map((newsEntry: any) => (
+              <CardNews newsEntry={newsEntry} />
+            ))}
+          </ul>
+        ) : (
+          <div class="text-center py-20 rounded-md">
+            <h3 class="text-xl font-medium ">
+              No s'han trobat notícies amb aquests filtres.
+            </h3>
+            <p class="text-gray-400 mt-2">Prova a canviar els criteris de cerca.</p>
+          </div>
+        )
+      }
+
+      <!-- Paginación -->
+      <div class="mt-12 flex justify-center items-center gap-6">
+        <a
+          href={getPaginationUrl(page - 1)}
+          class={`${page <= 1 ? "hidden" : "px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition"}`}
+        >
+          Anterior
+        </a>
+        
+        <span class="font-medium text-gray-700">Pàgina {page}</span>
+        
+        <a
+          href={getPaginationUrl(page + 1)}
+          class={`${publishedNews.length < 10 ? "hidden" : "px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition"}`}
+        >
+          Següent
+        </a>
+      </div>
+    </main>
+  </Container>
+</Layout>

@@ -1,0 +1,154 @@
+---
+import Dropdown from "../ui/Dropdown.astro";
+import Container from "../ui/Container.astro";
+import { Astronav, MenuItems, MenuIcon } from "astro-navbar";
+import { getAllSections } from "../../services/sectionsService";
+import { jwtDecode } from "jwt-decode";
+
+// 1. Carregar seccions dinàmicament
+let sections = [];
+try {
+  const allSections = await getAllSections();
+  sections = allSections.filter((s: any) => s.isActive === true);
+} catch (error) {
+  console.error("Error carregant seccions:", error);
+}
+
+const sectionChildren = sections.map((section: any) => ({
+  title: section.name,
+  path: `/sections/${section.id}` 
+}));
+
+const menuitems = [
+  { title: "Noticies", path: "/news" },
+  { title: "Activitats", path: "/activities" },
+  {
+    title: "Seccions",
+    path: "#",
+    children: sectionChildren.length > 0 
+      ? sectionChildren 
+      : [{ title: "Cap secció disponible", path: "#" }],
+  },
+  { title: "Qui som?", path: "/#" },
+  { title: "Contacte", path: "/contact" },
+];
+
+const guestItems = [
+  { title: "Iniciar sessió", path: "/auth/login" },
+  { title: "Registrar-se", path: "/auth/signup" },
+];
+
+// Tots els ítems possibles
+const allUserItems = [
+  { title: "Panell de control", path: "/dashboard" },
+  { title: "El meu perfil", path: "/me" },
+  { title: "Les meves activitats", path: "#" },
+  { title: "Informació juntes", path: "#" },
+  { title: "Administrar noticies", path: "/admin/news" },
+  { title: "Administrar activitats", path: "/admin/activities" },
+  { title: "Administrar juntes", path: "/admin/assembly" },
+  { title: "Administrar usuaris", path: "#" },
+  { title: "Administrar seccions", path: "/admin/sections" },
+  { title: "Administrar rols i permisos", path: "/admin/roles" },
+  // Ens assegurem que enviem a l'endpoint de logout que vam crear abans
+  { title: "Tancar sessió", path: "/auth/logout" },
+];
+
+
+
+const token = Astro.cookies.get("token")?.value;
+let userPerms: string[] = [];
+let isLoggedIn = !!token;
+
+// Decodifiquem el JWT per extreure els permisos sense cridar a l'API
+if (token) {
+  try {
+    const payload: any = jwtDecode(token);
+    userPerms = payload.userPermissions || [];
+  } catch (error) {
+    console.error("Error decodificant el token al menú:", error);
+    isLoggedIn = false;
+  }
+}
+
+// Mapa dels permisos requerits per cada element del menú
+const MENU_REQUIREMENTS: Record<string, string | null> = {
+  "Panell de control": null,
+  "El meu perfil": null,
+  "Les meves activitats": null,
+  "Informació juntes": null,
+  "Administrar noticies": "NEWS",
+  "Administrar activitats": "ACTIVITIES",
+  "Administrar juntes": "ASSEMBLY",
+  "Administrar usuaris": "USERS",
+  "Administrar seccions": "SECTIONS",
+  "Administrar rols i permisos": "ROLES",
+  "Tancar sessió": null,
+};
+
+// Funció comprobadora
+function hasPermission(userPerms: string[], reqPerm: string | null): boolean {
+if (!reqPerm) return true; // Accés lliure per als elements que tenen 'null'
+
+  // Busquem si l'usuari té ALGUN permís que coincideixi amb el mòdul
+  return userPerms.some(perm => {
+    // Separem el permís de l'usuari per ":" i ens quedem només amb la posició 0 (el mòdul)
+    // Ex: de "NEWS:* " o "NEWS:01:5" ens quedarà només "NEWS"
+    const [userModule] = perm.split(":"); 
+    
+    // Comprovem si aquest mòdul és el que demana el menú
+    return userModule === reqPerm;
+  });
+}
+
+// Filtrem la llista deixant només els que l'usuari pot veure
+const allowedUserItems = allUserItems.filter(item => 
+  hasPermission(userPerms, MENU_REQUIREMENTS[item.title])
+);
+---
+
+<Container class="sticky top-0 bg-white z-50">
+  <header class="flex flex-col lg:flex-row justify-between items-center my-5">
+    <Astronav>
+      <div class="flex w-full lg:w-auto items-center justify-between">
+        <a href="/" class="text-lg">
+          <span class="font-bold text-slate-800">Associa't</span>
+        </a>
+        <div class="block lg:hidden">
+          <MenuIcon class="w-4 h-4 text-gray-800" />
+        </div>
+      </div>
+      <MenuItems class="hidden w-full lg:w-auto mt-2 lg:flex lg:mt-0">
+        <ul class="flex flex-col lg:flex-row lg:gap-3 items-center">
+          {
+            menuitems.map((item) => (
+              <>
+                {item.children && (
+                  <Dropdown title={item.title} children={item.children} lastItem={false} />
+                )}
+                {!item.children && (
+                  <li>
+                    <a href={item.path} class="flex lg:px-3 py-2 text-gray-600 hover:text-gray-900">
+                      {item.title}
+                    </a>
+                  </li>
+                )}
+              </>
+            ))
+          }
+
+          {/* RENDERITZAT CONDICIONAL: Depèn directament del servidor! */}
+          {!isLoggedIn ? (
+            <div id="guest-menu">
+              <Dropdown title="Àrea privada" children={guestItems} lastItem={true} />
+            </div>
+          ) : (
+            <div id="user-menu">
+              <Dropdown title="Àrea privada" children={allowedUserItems} lastItem={true} />
+            </div>
+          )}
+        </ul>
+      </MenuItems>
+    </Astronav>
+  </header>
+</Container>

@@ -1,0 +1,69 @@
+const utils = require("../utils/utils");
+const sectionsRepository = require("../repositories/sectionsRepository");
+
+// Condicio que defineix qu es "public" per a una seccio
+const PUBLIC_CONDITION = { isActive: true };
+
+const getAll = async (visibility) => {
+  const where = utils.applyVisibilityFilter({}, visibility, PUBLIC_CONDITION, 'id');
+  return await sectionsRepository.findAll(where);
+};
+
+const getById = async (id, visibility) => {
+  const where = utils.applyVisibilityFilter({}, visibility, PUBLIC_CONDITION, 'id');
+  return await sectionsRepository.findById(parseInt(id, 10), where);
+};
+
+const create = async (input, userId) => {
+  if (!userId) throw new Error("No estàs autenticat. Has d'iniciar sessió.");
+
+  const sectionData = {
+    name: input.name,
+    description: input.description,
+    isActive: input.isActive !== undefined ? input.isActive : true,
+    publishedAt: input.publishedAt ? new Date(input.publishedAt) : null,
+  };
+
+  const newsInput = input.mainNews;
+  const generatedSlug = utils.slugify(`${newsInput.title}-${Date.now()}`);
+
+  const newsData = {
+    title: newsInput.title,
+    shortDescription: newsInput.shortDescription,
+    longDescription: newsInput.longDescription,
+    status: newsInput.status !== undefined ? newsInput.status : true,
+    type: newsInput.type,
+    publishedAt: newsInput.status !== false ? new Date() : null,
+    slug: generatedSlug,
+    author: { connect: { id: userId } },
+  };
+
+  return await sectionsRepository.createWithMainNews(sectionData, newsData);
+};
+
+const update = async (id, input, userId) => {
+  if (!userId) throw new Error("No estàs autenticat. Has d'iniciar sessió.");
+
+  const { mainNews, mainNewsId, ...sectionData } = input;
+  const dataToUpdate = { ...sectionData };
+
+  if (dataToUpdate.publishedAt) dataToUpdate.publishedAt = new Date(dataToUpdate.publishedAt);
+
+  if (mainNews) {
+    dataToUpdate.mainNews = {
+      update: {
+        title: mainNews.title,
+        shortDescription: mainNews.shortDescription,
+        longDescription: mainNews.longDescription,
+        status: mainNews.status,
+        type: mainNews.type
+      }
+    };
+  } else if (mainNewsId) {
+    dataToUpdate.mainNews = { connect: { id: parseInt(mainNewsId, 10) } };
+  }
+
+  return await sectionsRepository.update(parseInt(id, 10), dataToUpdate);
+};
+
+module.exports = { getAll, getById, create, update };
