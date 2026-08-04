@@ -11,6 +11,11 @@ const formatActivity = (activity) => {
   const documents = activity.documents || [];
   const mainImageDoc = documents.find((doc) => doc.usage === 'MAIN_IMAGE');
   const secondaryImageDoc = documents.find((doc) => doc.usage === 'SECONDARY_IMAGE');
+  // Adjunts (actes, convocatories...) associats a la Junta/Assemblea,
+  // vegeu CU-07/CU-12. L'accés ja queda controlat a nivell d'activitat
+  // sencera (canViewActivities), aixi que si l'usuari ha pogut arribar a
+  // llegir l'activitat, tambe pot veure la seva llista d'adjunts.
+  const attachmentDocs = documents.filter((doc) => doc.usage === 'ATTACHMENT');
 
   return {
     ...activity,
@@ -21,6 +26,10 @@ const formatActivity = (activity) => {
     registrationEndDate: activity.registrationEndDate ? activity.registrationEndDate.toISOString() : null,
     mainImage: mainImageDoc ? mainImageDoc.url : null,
     secondaryImage: secondaryImageDoc ? secondaryImageDoc.url : null,
+    documents: attachmentDocs.map((doc) => ({
+      ...doc,
+      createdAt: doc.createdAt ? doc.createdAt.toISOString() : null,
+    })),
   };
 };
 
@@ -36,12 +45,22 @@ module.exports = {
       return formatActivity(activity);
     },
 
+    getActivityById: async (_, { id }, context) => {
+      const activity = await activitiesService.getById(id, getActivityVisibility(context));
+      return formatActivity(activity);
+    },
+
     getFilteredActivities: async (_, { filter, sort, page, limit }, context) => {
       const filteredActivities = await activitiesService.getFiltered({ filter, sort, page, limit }, getActivityVisibility(context));
       return {
         items: filteredActivities.items.map(formatActivity),
         totalCount: filteredActivities.totalCount,
       };
+    },
+
+    getMyActivities: async (_, __, context) => {
+      const myActivities = await activitiesService.getMyActivities(context.userId);
+      return myActivities.map(formatActivity);
     },
   },
 

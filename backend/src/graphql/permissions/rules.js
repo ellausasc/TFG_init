@@ -73,6 +73,25 @@ const canCreateActivity = rule({ cache: 'strict' })(
   }
 );
 
+// Analoga a `canCreateActivity`, pero per a l'accio d'actualitzacio ('02').
+// Sense aquesta regla, un usuari amb permisos nomes sobre ASSEMBLY (que pot
+// crear Juntes/Assemblees gracies a `canCreateActivity`) mai podria editar-les,
+// ja que abans es comprovava sempre `ACTIVITIES:02` independentment del tipus.
+const canUpdateActivity = rule({ cache: 'strict' })(
+  async (parent, args, ctx) => {
+    if (!ctx.userId) return new Error("Usuari no autenticat");
+
+    const requestedType = args.input?.type || 'GENERAL';
+    const requiredModule = ACTIVITY_TYPE_MODULES[requestedType];
+    if (!requiredModule) return new Error(`Tipus d'activitat desconegut: ${requestedType}`);
+
+    const sectionId = args.input?.sectionId;
+    const allowed = await hasModulePermission(ctx, requiredModule, '02', sectionId);
+
+    return allowed || new Error(`Accés denegat. Et falta el permís d'edició a ${requiredModule} per aquesta activitat.`);
+  }
+);
+
 // Aquesta regla mai bloqueja la consulta: sempre retorna true. La seva feina
 // es calcular, per a l'usuari actual, si ha de veure NOMES el contingut
 // public (ctx.restrictedToPublic = true) o si te permis total del modul i,
@@ -169,5 +188,6 @@ module.exports = {
   isOwner,
   canViewSections,
   canViewActivities,
-  canCreateActivity
+  canCreateActivity,
+  canUpdateActivity
 };

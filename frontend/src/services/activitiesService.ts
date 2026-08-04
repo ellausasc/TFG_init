@@ -1,8 +1,11 @@
 import { fetchGraphQL } from "../api";
 import {
   GET_ACTIVITY_BY_SLUG,
+  GET_ACTIVITY_BY_ID,
   GET_ACTIVITIES_FILTERED_QUERY,
+  GET_MY_ACTIVITIES_QUERY,
   CREATE_ACTIVITY_MUTATION,
+  UPDATE_ACTIVITY_MUTATION,
   ENROLL_MUTATION,
 } from "./graphql/activities.queries";
 import type {
@@ -49,6 +52,29 @@ export async function getActivities(
   return data?.getFilteredActivities || { items: [], totalCount: 0 };
 }
 
+export async function getActivityById(
+  id: string,
+  headers: Record<string, string> = {},
+): Promise<Activity | null> {
+  const data = await fetchGraphQL<{ getActivityById: Activity }>(
+    GET_ACTIVITY_BY_ID,
+    { id },
+    headers,
+  );
+  return data.getActivityById;
+}
+
+export async function getMyActivities(
+  headers: Record<string, string> = {},
+): Promise<Activity[]> {
+  const data = await fetchGraphQL<{ getMyActivities: Activity[] }>(
+    GET_MY_ACTIVITIES_QUERY,
+    {},
+    headers,
+  );
+  return data?.getMyActivities || [];
+}
+
 export async function createActivity(
   input: CreateActivityInput,
   headers: Record<string, string> = {},
@@ -59,6 +85,19 @@ export async function createActivity(
     headers,
   );
   return data.createActivity;
+}
+
+export async function updateActivity(
+  id: string,
+  input: Partial<CreateActivityInput>,
+  headers: Record<string, string> = {},
+): Promise<Activity> {
+  const data = await fetchGraphQL<{ updateActivity: Activity }>(
+    UPDATE_ACTIVITY_MUTATION,
+    { id, input },
+    headers,
+  );
+  return data.updateActivity;
 }
 
 export async function enrollInActivity(

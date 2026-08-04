@@ -9,6 +9,10 @@ import { getSectionById, updateSection } from "../../../../services/sectionsServ
 
 export const prerender = false;
 
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/auth/login");
+}
+
 const { id } = Astro.params;
 
 if (!id) return Astro.redirect('/admin/sections');
@@ -108,10 +112,4 @@ if (!section) return Astro.redirect('/404');
       result!.className = "font-medium mt-4 text-red-600 block text-center";
     }
   });
-</script>
-
-<script is:inline>
-  if (typeof localStorage !== "undefined" && !localStorage.getItem("token")) {
-    window.location.href = "/login";
-  }
 </script>

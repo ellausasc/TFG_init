@@ -1,0 +1,88 @@
+---
+// src/pages/assemblies/index.astro
+// CU-07: Accés a documentació d'òrgans de govern (RF-2.4). Els socis poden
+// consultar les Assemblees i les Juntes no confidencials; el backend
+// (canViewActivities + applyActivityVisibilityFilter) ja s'encarrega
+// d'excloure les Juntes marcades com a privades quan l'usuari no en te
+// permis explicit.
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/ui/Container.astro";
+import SectionHead from "../../components/ui/SectionHead.astro";
+import CardActivity from "../../components/activities/ActivityCard.astro";
+import ActivityFilters from "../../components/activities/ActivityFilters.astro";
+import { getActivities } from "../../services/activitiesService";
+
+export const prerender = false;
+
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/auth/login");
+}
+
+const token = Astro.cookies.get("token")!.value;
+const headers = { Cookie: `token=${token}` };
+
+const page = parseInt(Astro.url.searchParams.get("page") || "1");
+const title = Astro.url.searchParams.get("title");
+
+const filter: any = { types: ["ASSEMBLEA", "JUNTA"] };
+if (title) filter.title = title;
+
+const { items: activities } = await getActivities({ page, limit: 10, filter }, headers);
+
+const getPaginationUrl = (newPage: number) => {
+  const params = new URLSearchParams(Astro.url.searchParams);
+  params.set("page", newPage.toString());
+  return `?${params.toString()}`;
+};
+---
+
+<Layout title="Informació de Juntes i Assemblees">
+  <Container>
+    <SectionHead align="left">
+      <Fragment slot="title">Juntes i Assemblees</Fragment>
+      <Fragment slot="desc">
+        Consulta les actes i convocatòries de les assemblees i juntes obertes
+        als socis.
+      </Fragment>
+    </SectionHead>
+
+    <ActivityFilters action="/assemblies" />
+
+    <main class="mt-10 pb-24">
+      {
+        activities.length > 0 ? (
+          <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
+            {activities.map((activityEntry: any) => (
+              <CardActivity activityEntry={activityEntry} />
+            ))}
+          </ul>
+        ) : (
+          <div class="text-center py-20 rounded-md">
+            <h3 class="text-xl font-medium">
+              No hi ha cap Junta ni Assemblea disponible per a tu.
+            </h3>
+            <p class="text-gray-400 mt-2">
+              Si creus que hauries de veure-hi contingut, contacta amb la junta directiva.
+            </p>
+          </div>
+        )
+      }
+
+      <div class="mt-12 flex justify-center items-center gap-6">
+        <a
+          href={getPaginationUrl(page - 1)}
+          class={`${page <= 1 ? "hidden" : "px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition"}`}
+        >
+          Anterior
+        </a>
+        <span class="font-medium text-gray-700">Pàgina {page}</span>
+        <a
+          href={getPaginationUrl(page + 1)}
+          class={`${activities.length < 10 ? "hidden" : "px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition"}`}
+        >
+          Següent
+        </a>
+      </div>
+    </main>
+  </Container>
+</Layout>

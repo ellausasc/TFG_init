@@ -13,6 +13,7 @@ interface Props {
   showImages?: boolean;
   showIsPrivate?: boolean;
   showCapacity?: boolean;
+  showAttachments?: boolean;
   allowedTypes?: { value: string; label: string }[];
 }
 
@@ -35,9 +36,14 @@ const {
   showImages = true,
   showIsPrivate = true,
   showCapacity = true,
+  showAttachments = true,
   // Si no s'indica cap restriccio (p.ex. en un context intern), es mostren tots els tipus
   allowedTypes = ALL_ACTIVITY_TYPES,
 } = Astro.props;
+
+// Nomes es mostren aqui els adjunts de tipus "document" (actes, convocatories...),
+// vegeu CU-12; les imatges (MAIN_IMAGE/SECONDARY_IMAGE) ja tenen el seu propi camp.
+const existingAttachments: any[] = initialData?.documents || [];
 ---
 
 
@@ -217,3 +223,57 @@ const {
     </label>
   </div>
 )}
+
+{showAttachments && (
+  <div class="mb-8 border-t border-gray-100 pt-6">
+    <label class="block text-sm font-semibold text-gray-900 mb-2">
+      Documentació adjunta (actes, convocatòries...)
+    </label>
+    <p class="text-xs text-gray-500 mb-3">
+      Si l'activitat es marca com a "privada", els adjunts es desaran al
+      magatzem restringit i nomes seran descarregables per usuaris amb
+      permís sobre l'apartat de Juntes/Assemblees.
+    </p>
+
+    {existingAttachments.length > 0 && (
+      <ul id="existing-attachments-list" class="mb-4 divide-y divide-gray-100 border border-gray-200 rounded-md">
+        {existingAttachments.map((doc: any) => (
+          <li class="flex items-center justify-between px-4 py-2 text-sm">
+            <span class="text-gray-700 truncate">{doc.name}</span>
+            <label class="flex items-center gap-2 text-red-600 text-xs font-medium cursor-pointer">
+              <input type="checkbox" name="removeDocumentIds" value={doc.id} class="accent-red-600" />
+              Eliminar
+            </label>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    <input
+      type="file"
+      id="new-attachments-input"
+      name="newAttachments"
+      multiple
+      class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 outline-none transition"
+    />
+    <ul id="pending-attachments-list" class="mt-2 text-xs text-gray-500 space-y-1"></ul>
+  </div>
+)}
+
+<script>
+  // Previsualitzacio simple dels fitxers seleccionats abans de pujar-los
+  // (la pujada real es fa al moment d'enviar el formulari, a create/edit.astro)
+  const attachmentsInput = document.getElementById('new-attachments-input') as HTMLInputElement | null;
+  const pendingList = document.getElementById('pending-attachments-list');
+
+  if (attachmentsInput && pendingList) {
+    attachmentsInput.addEventListener('change', () => {
+      pendingList.innerHTML = '';
+      Array.from(attachmentsInput.files || []).forEach((file) => {
+        const li = document.createElement('li');
+        li.textContent = `📎 ${file.name}`;
+        pendingList.appendChild(li);
+      });
+    });
+  }
+</script>

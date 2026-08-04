@@ -6,6 +6,10 @@ import SectionHead from "../../../components/ui/SectionHead.astro";
 import RoleForm from "../../../components/roles/RoleFields.astro";
 import { getRoleFormData } from "../../../services/rolesService";
 
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/auth/login");
+}
+
 const cookie = Astro.request.headers.get("cookie");
 // If there is no cookie, pass undefined to match the expected type
 const headers: Record<string, string> | undefined = cookie ? { Cookie: cookie } : undefined;
@@ -22,10 +26,10 @@ const { modules, actions, sections } = await getRoleFormData(headers);
         </a>
       </div>
 
-      <SectionHead 
-        title="Crear Nou Rol i Assignar Permisos" 
-        description="Defineix el nom del rol i afegeix els permisos d'accés abans de desar." 
-      />
+      <SectionHead>
+        <Fragment slot="title">Crear Nou Rol i Assignar Permisos</Fragment>
+        <Fragment slot="desc">Defineix el nom del rol i afegeix els permisos d'accés abans de desar.</Fragment>
+      </SectionHead>
 
       <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200 mt-8">
         <RoleForm 

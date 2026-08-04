@@ -4,11 +4,29 @@ import SectionHead from "../../../components/ui/SectionHead.astro";
 import Container from "../../../components/ui/Container.astro";
 import CardSection from "../../../components/sections/SectionCard.astro";
 import { getAllSections } from "../../../services/sectionsService";
+import { jwtDecode } from "jwt-decode";
 
 export const prerender = false;
 
 // Obtenim les seccions des del servei
 const sections = await getAllSections();
+
+// El botó "Crear nova secció" nomes s'ha de mostrar a usuaris amb permis
+// sobre el modul SECTIONS (RF-3.1). L'antiga comprovacio via
+// `localStorage.getItem("token")` no funcionava mai, ja que la sessio es
+// gestiona amb una galeta httpOnly (vegeu memoria, seccio 9.4.1) i mai no
+// es guarda cap token a localStorage.
+const token = Astro.cookies.get("token")?.value;
+let canCreateSections = false;
+if (token) {
+  try {
+    const payload: any = jwtDecode(token);
+    const userPerms: string[] = payload.userPermissions || [];
+    canCreateSections = userPerms.some((perm) => perm.split(":")[0] === "SECTIONS");
+  } catch (error) {
+    console.error("Error decodificant el token:", error);
+  }
+}
 ---
 
 <Layout title="Seccions">
@@ -20,17 +38,19 @@ const sections = await getAllSections();
       </Fragment>
     </SectionHead>
 
-    <div id="create-btn-container" class="mt-8 flex justify-left hidden">
-      <a 
-        href="/admin/sections/create" 
-        class="bg-gray-800 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition flex items-center gap-2 font-medium"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-        </svg>
-        Crear nova secció
-      </a>
-    </div>
+    {canCreateSections && (
+      <div class="mt-8 flex justify-left">
+        <a 
+          href="/admin/sections/create" 
+          class="bg-gray-800 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition flex items-center gap-2 font-medium"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+          </svg>
+          Crear nova secció
+        </a>
+      </div>
+    )}
 
     <main class="mt-10 pb-24">
       {
@@ -51,10 +71,3 @@ const sections = await getAllSections();
     </main>
   </Container>
 </Layout>
-
-<script>
-  // Mostrar el botó només si l'usuari ha iniciat sessió (té token)
-  if (localStorage.getItem("token")) {
-    document.getElementById("create-btn-container")?.classList.remove("hidden");
-  }
-</script>

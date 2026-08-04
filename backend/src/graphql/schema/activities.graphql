@@ -1,3 +1,16 @@
+# Representa un document adjunt (acta, convocatoria...) associat a una
+# activitat de tipus Junta/Assemblea (vegeu memoria, CU-12). Nomes s'exposen
+# aqui els documents amb usage=ATTACHMENT; les imatges (MAIN_IMAGE/
+# SECONDARY_IMAGE) es continuen exposant com als camps escalars existents
+# (mainImage/secondaryImage).
+type ActivityDocument {
+  id: ID!
+  name: String!
+  url: String!
+  type: String!
+  createdAt: String!
+}
+
 type Activity {
   id: ID!
   title: String!
@@ -14,10 +27,21 @@ type Activity {
   mainImage: String
   secondaryImage: String
   slug: String!
+  isPrivate: Boolean!
   
   author: User!
   section: Section!
   participants: [User!]! # Llista d'usuaris inscrits
+  documents: [ActivityDocument!]! # Adjunts (actes, convocatories...)
+}
+
+# Fitxer ja pujat via l'endpoint REST POST /upload (vegeu memoria, 9.4.2):
+# el frontend primer puja el binari a MinIO i despres nomes envia aqui la
+# referencia (nom, url i tipus MIME retornats per aquell endpoint).
+input AttachmentInput {
+  name: String!
+  url: String!
+  type: String!
 }
 
 input CreateActivityInput {
@@ -34,6 +58,8 @@ input CreateActivityInput {
   mainImage: String
   secondaryImage: String
   sectionId: Int!
+  attachments: [AttachmentInput!] # Nous adjunts a afegir (creacio i edicio)
+  removeDocumentIds: [ID!] # Adjunts existents a eliminar (nomes te sentit en edicio)
 }
 
 input ActivityFilterInput {
@@ -59,12 +85,16 @@ type PaginatedActivities {
 extend type Query {
   getAllActivities: [Activity!]!
   getActivityBySlug(slug: String!): Activity
+  getActivityById(id: ID!): Activity
   getFilteredActivities(
     filter: ActivityFilterInput
     sort: SortInput
     page: Int
     limit: Int
   ): PaginatedActivities
+  # RF-2.3 / CU-06: llistat de les activitats en que l'usuari autenticat
+  # actual esta inscrit.
+  getMyActivities: [Activity!]!
 }
 
 extend type Mutation {

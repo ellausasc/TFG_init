@@ -28,8 +28,18 @@ const resolvers = {
   },
 
   Mutation: {
-    registerUser: async (_, { input }) => {
+    registerUser: async (_, { input }, context) => {
       const result = await usersService.registerUser(input);
+
+      // Igual que a loginUser: despres de registrar-se, l'usuari queda amb
+      // sessio iniciada (CU-02), establint la mateixa galeta httpOnly.
+      context.res.cookie('token', result.token, {
+        httpOnly: true,
+        path: '/',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 dies en ms
+      });
+
       return { ...result, user: formatUser(result.user) };
     },
 

@@ -1,42 +1,60 @@
 ---
-import Layout from "../../../layouts/Layout.astro";
-import Container from "../../../components/ui/Container.astro";
-import Sectionhead from "../../../components/ui/SectionHead.astro";
-import Button from "../../../components/ui/Button.astro";
-import NewsFields from "../../../components/news/NewsFields.astro";
+// src/pages/admin/news/[slug]/edit.astro
+import Layout from "../../../../layouts/Layout.astro";
+import Container from "../../../../components/ui/Container.astro";
+import SectionHead from "../../../../components/ui/SectionHead.astro";
+import Button from "../../../../components/ui/Button.astro";
+import NewsFields from "../../../../components/news/NewsFields.astro";
+import { getNewsBySlug } from "../../../../services/newsService";
+
+export const prerender = false;
 
 if (!Astro.cookies.has("token")) {
   return Astro.redirect("/auth/login");
 }
+
+const { slug } = Astro.params;
+if (!slug) return Astro.redirect("/admin/news");
+
+const news = await getNewsBySlug(slug);
+if (!news) return Astro.redirect("/404");
+
+const initialData = { ...news, sectionId: news.section?.id };
 ---
 
-<Layout title="Crear Notícia">
+<Layout title={`Editar notícia: ${news.title}`}>
   <Container>
-    <Sectionhead>
-      <Fragment slot="title">Crear nova notícia</Fragment>
-      <Fragment slot="desc">Afegeix una nova publicació al portal.</Fragment>
-    </Sectionhead>
+    <SectionHead>
+      <Fragment slot="title">Editar notícia: {news.title}</Fragment>
+      <Fragment slot="desc">Modifica el contingut d'aquesta publicació.</Fragment>
+    </SectionHead>
   </Container>
-  
+
   <Container class="pt-16 pb-24">
     <form id="news-form" class="max-w-3xl mx-auto" novalidate>
-      <NewsFields />
-      
+      <NewsFields initialData={initialData} />
+
       <div class="mt-8 text-center">
-        <Button type="submit" size="lg">Crear Notícia</Button>
+        <Button type="submit" size="lg">Guardar Canvis</Button>
       </div>
       <div id="news-result" class="font-medium mt-4 hidden text-center"></div>
     </form>
   </Container>
 </Layout>
 
+<script define:vars={{ newsId: news.id }}>
+  window.newsId = newsId;
+</script>
+
 <script>
-  import { createNews } from "../../../services/newsService";
+  import { updateNews } from "../../../../services/newsService";
 
   const form = document.getElementById("news-form") as HTMLFormElement;
+  const newsId = (window as any).newsId as string;
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    
+
     const formData = new FormData(form);
     const shortDescInput = document.getElementById("newsShort") as HTMLInputElement;
     const longDescInput = document.getElementById("newsLong") as HTMLInputElement;
@@ -46,19 +64,17 @@ if (!Astro.cookies.has("token")) {
       shortDescription: shortDescInput?.value || "",
       longDescription: longDescInput?.value || "",
       sectionId: parseInt(formData.get("sectionId") as string),
-      publishedAt: new Date(formData.get("publishedAt") as string).toISOString(),
       status: formData.get("isPublic") === "on" ? "PUBLISHED" : "DRAFT",
     };
 
     const result = document.getElementById("news-result");
 
     try {
-      result!.innerText = "Creant notícia...";
+      result!.innerText = "Desant canvis...";
       result!.className = "font-medium mt-4 text-blue-600 block text-center";
-      await createNews(input);
-      result!.innerText = "Notícia creada correctament!";
+      await updateNews(newsId, input);
+      result!.innerText = "Notícia actualitzada correctament!";
       result!.className = "font-medium mt-4 text-green-600 block text-center";
-      form.reset();
     } catch (err: any) {
       result!.innerText = "Error: " + err.message;
       result!.className = "font-medium mt-4 text-red-600 block text-center";

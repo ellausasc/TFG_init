@@ -6,6 +6,10 @@ import SectionHead from "../../../components/ui/SectionHead.astro";
 import PermissionsCard from "../../../components/roles/RoleCard.astro";
 import { getAllRolesWithPermissions } from "../../../services/rolesService";
 
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/auth/login");
+}
+
 // 1. Obtenim les galetes/token si cal per a la peticio SSR
 const token = Astro.cookies.get("token")?.value;
 const headers: Record<string, string> | undefined = token ? { Cookie: `token=${token}` } : undefined;
@@ -17,10 +21,10 @@ const roles = await getAllRolesWithPermissions(headers);
 <Layout title="Administrar Roles i Permisos">
   <Container>
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-      <SectionHead 
-        title="Roles i Permisos" 
-        description="Gestiona l'accés dels usuaris als diferents mòduls del sistema." 
-      />
+      <SectionHead>
+        <Fragment slot="title">Roles i Permisos</Fragment>
+        <Fragment slot="desc">Gestiona l'accés dels usuaris als diferents mòduls del sistema.</Fragment>
+      </SectionHead>
       <a 
         href="/admin/roles/create" 
         class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800 transition-colors shadow-sm"

@@ -1,5 +1,5 @@
 ---
-// src/pages/admin/assembly/index.astro
+// src/pages/admin/assemblies/index.astro
 import Layout from "../../../layouts/Layout.astro";
 import Container from "../../../components/ui/Container.astro";
 import SectionHead from "../../../components/ui/SectionHead.astro";
@@ -64,14 +64,14 @@ const getPaginationUrl = (newPage: number) => {
       </a>
     </div>
 
-    <FilterActivities action="/admin/assembly" />
+    <FilterActivities action="/admin/assemblies" />
 
     <main class="mt-10 pb-24">
       {
         activities.length > 0 ? (
           <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
             {activities.map((activityEntry: any) => (
-              <CardActivity activityEntry={activityEntry} />
+              <CardActivity activityEntry={activityEntry} editHref={`/admin/activities/${activityEntry.id}/edit`} />
             ))}
           </ul>
         ) : (

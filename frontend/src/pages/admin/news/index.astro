@@ -1,0 +1,81 @@
+---
+// src/pages/admin/news/index.astro
+import Layout from "../../../layouts/Layout.astro";
+import Container from "../../../components/ui/Container.astro";
+import SectionHead from "../../../components/ui/SectionHead.astro";
+import { getNewsAdmin } from "../../../services/newsService";
+
+export const prerender = false;
+
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/auth/login");
+}
+
+const token = Astro.cookies.get("token")!.value;
+const headers = { Cookie: `token=${token}` };
+
+const page = parseInt(Astro.url.searchParams.get("page") || "1");
+let news: any[] = [];
+try {
+  const result = await getNewsAdmin({ page, limit: 20 }, headers);
+  news = result.items;
+} catch (error) {
+  console.error("Error carregant les notícies:", error);
+}
+---
+
+<Layout title="Administrar Notícies">
+  <Container>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+      <SectionHead align="left">
+        <Fragment slot="title">Notícies</Fragment>
+        <Fragment slot="desc">Consulta, crea i edita les notícies del portal.</Fragment>
+      </SectionHead>
+      <a
+        href="/admin/news/create"
+        class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800 transition-colors shadow-sm whitespace-nowrap"
+      >
+        Crear Notícia
+      </a>
+    </div>
+
+    <main class="pb-24">
+      <div class="overflow-x-auto border border-gray-200 rounded-lg">
+        <table class="w-full text-sm text-left text-gray-600">
+          <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
+            <tr>
+              <th class="px-6 py-3">Títol</th>
+              <th class="px-6 py-3">Secció</th>
+              <th class="px-6 py-3">Estat</th>
+              <th class="px-6 py-3 text-right">Accions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 bg-white">
+            {news.map((item: any) => (
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-3 font-medium text-gray-900">{item.title}</td>
+                <td class="px-6 py-3">{item.section?.name}</td>
+                <td class="px-6 py-3">
+                  {item.status === "PUBLISHED" ? (
+                    <span class="text-green-600 font-medium">Publicada</span>
+                  ) : (
+                    <span class="text-amber-600 font-medium">Esborrany</span>
+                  )}
+                </td>
+                <td class="px-6 py-3 text-right">
+                  <a href={`/admin/news/${item.slug}/edit`} class="text-indigo-600 hover:text-indigo-800 font-medium text-xs">
+                    Editar
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {news.length === 0 && (
+          <p class="text-center text-gray-500 italic py-8">Encara no hi ha cap notícia creada.</p>
+        )}
+      </div>
+    </main>
+  </Container>
+</Layout>

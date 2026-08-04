@@ -1,0 +1,83 @@
+---
+// src/pages/admin/users/index.astro
+// CU-13 / RF-3.5: Gestió d'usuaris
+import Layout from "../../../layouts/Layout.astro";
+import Container from "../../../components/ui/Container.astro";
+import SectionHead from "../../../components/ui/SectionHead.astro";
+import { getAllUsers } from "../../../services/usersService";
+
+export const prerender = false;
+
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/auth/login");
+}
+
+const token = Astro.cookies.get("token")!.value;
+const headers = { Cookie: `token=${token}` };
+
+let users: any[] = [];
+try {
+  users = await getAllUsers(headers);
+} catch (error) {
+  console.error("Error carregant els usuaris:", error);
+}
+---
+
+<Layout title="Administrar Usuaris">
+  <Container>
+    <SectionHead align="left">
+      <Fragment slot="title">Usuaris i socis</Fragment>
+      <Fragment slot="desc">
+        Consulta les dades dels membres registrats i gestiona els rols que
+        tenen assignats.
+      </Fragment>
+    </SectionHead>
+
+    <main class="mt-10 pb-24">
+      <div class="overflow-x-auto border border-gray-200 rounded-lg">
+        <table class="w-full text-sm text-left text-gray-600">
+          <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
+            <tr>
+              <th class="px-6 py-3">Codi</th>
+              <th class="px-6 py-3">Nom</th>
+              <th class="px-6 py-3">Email</th>
+              <th class="px-6 py-3">Rols</th>
+              <th class="px-6 py-3">Estat</th>
+              <th class="px-6 py-3 text-right">Accions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 bg-white">
+            {users.map((user: any) => (
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-3 font-mono text-xs text-gray-500">{user.code}</td>
+                <td class="px-6 py-3 font-medium text-gray-900">{user.firstName} {user.lastName1}</td>
+                <td class="px-6 py-3">{user.email}</td>
+                <td class="px-6 py-3">
+                  {user.roles && user.roles.length > 0
+                    ? user.roles.map((r: any) => r.description).join(", ")
+                    : <span class="text-gray-400 italic">Sense rol (soci)</span>}
+                </td>
+                <td class="px-6 py-3">
+                  {user.deletedAt ? (
+                    <span class="text-red-600 font-medium">Baixa</span>
+                  ) : (
+                    <span class="text-green-600 font-medium">Actiu</span>
+                  )}
+                </td>
+                <td class="px-6 py-3 text-right">
+                  <a href={`/admin/users/${user.id}/edit`} class="text-indigo-600 hover:text-indigo-800 font-medium text-xs">
+                    Editar
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {users.length === 0 && (
+          <p class="text-center text-gray-500 italic py-8">No hi ha usuaris registrats.</p>
+        )}
+      </div>
+    </main>
+  </Container>
+</Layout>

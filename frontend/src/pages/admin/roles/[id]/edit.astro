@@ -7,6 +7,10 @@ import RoleForm from "../../../../components/roles/RoleFields.astro";
 import RoleUsersAssignment from "../../../../components/roles/RoleUserAssignment.astro";
 import { getRoleFormData, getRoleById, getAllUsersBasic } from "../../../../services/rolesService";
 
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/auth/login");
+}
+
 const { id } = Astro.params;
 if (!id) return Astro.redirect('/admin/roles');
 
@@ -49,10 +53,10 @@ const initialData = {
         </a>
       </div>
 
-      <SectionHead 
-        title={`Modificar Rol: ${role.description}`} 
-        description="Gestiona les dades bàsiques, els permisos del sistema i els usuaris assignats a aquest rol." 
-      />
+      <SectionHead>
+        <Fragment slot="title">{`Modificar Rol: ${role.description}`}</Fragment>
+        <Fragment slot="desc">Gestiona les dades bàsiques, els permisos del sistema i els usuaris assignats a aquest rol.</Fragment>
+      </SectionHead>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
         

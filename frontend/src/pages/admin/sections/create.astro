@@ -5,6 +5,12 @@ import SectionHead from "../../../components/ui/SectionHead.astro";
 import Button from "../../../components/ui/Button.astro";
 import SectionFields from "../../../components/sections/SectionFields.astro";
 import NewsFields from "../../../components/news/NewsFields.astro";
+
+export const prerender = false;
+
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/auth/login");
+}
 ---
 
 <Layout title="Crear Secció">
@@ -71,7 +77,6 @@ import NewsFields from "../../../components/news/NewsFields.astro";
     };
 
     const result = document.getElementById("result");
-    const token = localStorage.getItem("token") || "";
 
     try {
       result!.innerText = "Creant secció";
@@ -87,11 +92,4 @@ import NewsFields from "../../../components/news/NewsFields.astro";
       result!.className = "font-medium mt-4 text-red-600 block text-center";
     }
   });
-</script>
-
-<script is:inline>
-  // Seguretat: si no hi ha token, redirigeix al login
-  if (typeof localStorage !== "undefined" && !localStorage.getItem("token")) {
-    window.location.href = "/login";
-  }
 </script>

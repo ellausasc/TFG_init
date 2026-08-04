@@ -69,6 +69,19 @@ const buildImageDocuments = (input) => {
   return documents;
 };
 
+// Documents adjunts (actes, convocatories...) d'una Junta/Assemblea, vegeu
+// CU-12 "Gestio de juntes i documentacio". Cada element ja ha estat pujat
+// prèviament a MinIO mitjançant l'endpoint REST /upload; aqui nomes es
+// desa la referencia (Document amb usage=ATTACHMENT).
+const buildAttachmentDocuments = (input) => {
+  return (input.attachments || []).map((attachment) => ({
+    name: attachment.name,
+    url: attachment.url,
+    type: attachment.type,
+    usage: 'ATTACHMENT',
+  }));
+};
+
 const getAll = async (activityVisibility) => {
   const where = applyActivityVisibilityFilter({}, activityVisibility);
   return await activitiesRepository.findAll(where);
@@ -139,7 +152,7 @@ const create = async (input, userId) => {
     registrationEndDate: input.registrationEndDate ? new Date(input.registrationEndDate) : null,
     author: { connect: { id: userId } },
     section: { connect: { id: parseInt(input.sectionId) } },
-    documents: { create: buildImageDocuments(input) }
+    documents: { create: [...buildImageDocuments(input), ...buildAttachmentDocuments(input)] }
   };
 
   return await activitiesRepository.create(dataToCreate);
@@ -172,16 +185,42 @@ const update = async (id, input) => {
   if (input.mainImage !== undefined) usagesToReplace.push('MAIN_IMAGE');
   if (input.secondaryImage !== undefined) usagesToReplace.push('SECONDARY_IMAGE');
 
-  if (usagesToReplace.length > 0) {
+  // Adjunts (actes, convocatories...) que l'administrador vol eliminar
+  // explicitament (CU-12).
+  const removeIds = (input.removeDocumentIds || [])
+    .map((id) => parseInt(id, 10))
+    .filter((id) => !Number.isNaN(id));
+
+  // Prisma nomes admet un `deleteMany` per relacio en una mateixa
+  // actualitzacio, aixi que combinem les dues condicions (reemplaç
+  // d'imatges + eliminacio explicita d'adjunts) amb un OR.
+  const deleteConditions = [];
+  if (usagesToReplace.length > 0) deleteConditions.push({ usage: { in: usagesToReplace } });
+  if (removeIds.length > 0) deleteConditions.push({ id: { in: removeIds } });
+
+  const newDocuments = [...buildImageDocuments(input), ...buildAttachmentDocuments(input)];
+
+  if (deleteConditions.length > 0 || newDocuments.length > 0) {
     dataToUpdate.documents = {
-      deleteMany: { usage: { in: usagesToReplace } },
-      create: buildImageDocuments(input)
+      ...(deleteConditions.length > 0 ? { deleteMany: { OR: deleteConditions } } : {}),
+      ...(newDocuments.length > 0 ? { create: newDocuments } : {}),
     };
   }
   delete dataToUpdate.mainImage;
   delete dataToUpdate.secondaryImage;
+  delete dataToUpdate.attachments;
+  delete dataToUpdate.removeDocumentIds;
 
   return await activitiesRepository.update(numericId, dataToUpdate);
+};
+
+// RF-2.3 / CU-06: llistat de les activitats en que l'usuari esta inscrit.
+// No s'aplica cap filtre addicional de visibilitat: si l'usuari ja hi
+// consta com a participant, ha de poder veure-la sempre, independentment
+// de si es privada o no.
+const getMyActivities = async (userId) => {
+  if (!userId) throw new Error("No estàs autenticat.");
+  return await activitiesRepository.findAll({ participants: { some: { id: userId } } });
 };
 
 const enroll = async (activityId, userId) => {
@@ -202,4 +241,4 @@ const enroll = async (activityId, userId) => {
   return true;
 };
 
-module.exports = { getAll, getBySlug, getById, getFiltered, create, update, enroll };
+module.exports = { getAll, getBySlug, getById, getFiltered, create, update, enroll, getMyActivities };

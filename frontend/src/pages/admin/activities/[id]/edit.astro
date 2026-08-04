@@ -1,19 +1,31 @@
 ---
-import Layout from "../../../layouts/Layout.astro";
-import Container from "../../../components/ui/Container.astro";
-import Sectionhead from "../../../components/ui/SectionHead.astro";
-import Button from "../../../components/ui/Button.astro";
-import ActivityFields from "../../../components/activities/ActivityFields.astro";
+// src/pages/admin/activities/[id]/edit.astro
+import Layout from "../../../../layouts/Layout.astro";
+import Container from "../../../../components/ui/Container.astro";
+import SectionHead from "../../../../components/ui/SectionHead.astro";
+import Button from "../../../../components/ui/Button.astro";
+import ActivityFields from "../../../../components/activities/ActivityFields.astro";
+import { getActivityById } from "../../../../services/activitiesService";
 import { jwtDecode } from "jwt-decode";
+
+export const prerender = false;
 
 if (!Astro.cookies.has("token")) {
   return Astro.redirect("/auth/login");
 }
 
-// Calculem quins tipus d'activitat pot crear l'usuari segons els seus permisos:
-// el modul ACTIVITIES permet els tipus GENERAL i TALLER; el modul ASSEMBLY
-// permet els altres dos (ASSEMBLEA i JUNTA).
+const { id } = Astro.params;
+if (!id) return Astro.redirect("/admin/activities");
+
 const token = Astro.cookies.get("token")!.value;
+const headers = { Cookie: `token=${token}` };
+
+const activity = await getActivityById(id, headers);
+if (!activity) return Astro.redirect("/404");
+
+// Calculem quins tipus d'activitat pot assignar l'usuari, igual que a
+// create.astro (el modul ACTIVITIES permet GENERAL/TALLER; ASSEMBLY
+// permet ASSEMBLEA/JUNTA).
 let userPerms: string[] = [];
 try {
   const payload: any = jwtDecode(token);
@@ -42,53 +54,63 @@ const allowedTypes = [
       ]
     : []),
 ];
+
+// ActivityFields espera sectionId com a camp pla dins initialData
+const initialData = { ...activity, sectionId: activity.section?.id };
 ---
 
-<Layout title="Crear Activitat">
+<Layout title={`Editar activitat: ${activity.title}`}>
   <Container>
-    <Sectionhead>
-      <Fragment slot="title">Crear nova activitat</Fragment>
-      <Fragment slot="desc">Afegeix una nova activitat perquè els usuaris s'hi puguin inscriure.</Fragment>
-    </Sectionhead>
+    <SectionHead>
+      <Fragment slot="title">Editar activitat: {activity.title}</Fragment>
+      <Fragment slot="desc">
+        Modifica les dades de l'activitat i la seva documentació adjunta.
+      </Fragment>
+    </SectionHead>
   </Container>
-  
+
   <Container class="pt-16 pb-24">
     <form id="activity-form" class="max-w-3xl mx-auto" novalidate>
-      <ActivityFields allowedTypes={allowedTypes} />
-      
+      <ActivityFields initialData={initialData} allowedTypes={allowedTypes} />
+
       <div class="mt-8 text-center">
-        <Button type="submit" size="lg" disabled={allowedTypes.length === 0}>Crear Activitat</Button>
+        <Button type="submit" size="lg">Guardar Canvis</Button>
       </div>
       <div id="activity-result" class="font-medium mt-4 hidden text-center"></div>
     </form>
   </Container>
 </Layout>
 
+<script define:vars={{ activityId: id }}>
+  window.activityId = activityId;
+</script>
+
 <script>
-  import { createActivity } from "../../../services/activitiesService";
-  import { uploadAttachment } from "../../../utils";
+  import { updateActivity } from "../../../../services/activitiesService";
+  import { uploadAttachment } from "../../../../utils";
 
   const form = document.getElementById("activity-form") as HTMLFormElement;
-  
+  const activityId = (window as any).activityId as string;
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    
+
     const formData = new FormData(form);
     const shortDescInput = document.getElementById("activityShort") as HTMLInputElement;
     const longDescInput = document.getElementById("activityLong") as HTMLInputElement;
     const attachmentsInput = document.getElementById("new-attachments-input") as HTMLInputElement | null;
 
-    // Control de les dates opcionals
     const regStart = formData.get("registrationStartDate") as string;
     const regEnd = formData.get("registrationEndDate") as string;
     const capacityValue = formData.get("capacity") as string;
     const isPrivate = formData.get("isPrivate") === "on";
 
+    // Documents marcats amb la casella "Eliminar" a la llista d'adjunts existents
+    const removeDocumentIds = formData.getAll("removeDocumentIds") as string[];
+
     const result = document.getElementById("activity-result");
 
     try {
-      // Els documents (actes, convocatories...) es pugen abans de crear
-      // l'activitat: si es privada, van al magatzem restringit (CU-12).
       let attachments: { name: string; url: string; type: string }[] = [];
       const files = Array.from(attachmentsInput?.files || []);
       if (files.length > 0) {
@@ -104,7 +126,7 @@ const allowedTypes = [
         shortDescription: shortDescInput?.value || "",
         longDescription: longDescInput?.value || "",
         sectionId: parseInt(formData.get("sectionId") as string),
-        status: formData.get("status") === "on" ? "PUBLISHED" : "DRAFT", // GraphQL espera un String
+        status: formData.get("status") === "on" ? "PUBLISHED" : "DRAFT",
         type: formData.get("type"),
         isPrivate,
         capacity: capacityValue ? parseInt(capacityValue) : null,
@@ -114,16 +136,16 @@ const allowedTypes = [
         mainImage: formData.get("mainImage") || null,
         secondaryImage: formData.get("secondaryImage") || null,
         attachments,
+        removeDocumentIds,
       };
 
-      result!.innerText = "Creant activitat...";
+      result!.innerText = "Desant canvis...";
       result!.className = "font-medium mt-4 text-blue-600 block text-center";
-      
-      await createActivity(input);
-      
-      result!.innerText = "Activitat creada correctament!";
+
+      await updateActivity(activityId, input);
+
+      result!.innerText = "Activitat actualitzada correctament!";
       result!.className = "font-medium mt-4 text-green-600 block text-center";
-      form.reset();
     } catch (err: any) {
       result!.innerText = "Error: " + err.message;
       result!.className = "font-medium mt-4 text-red-600 block text-center";

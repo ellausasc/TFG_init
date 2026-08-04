@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const multer = require("multer");
 const { ApolloServer } = require("@apollo/server");
 const { expressMiddleware } = require("@apollo/server/express4");
 const cookieParser = require("cookie-parser");
@@ -12,8 +11,6 @@ const minioRouter = require("./config/minio");
 const permissions = require("./graphql/permissions/shield");
 const { applyMiddleware } = require("graphql-middleware");
 const JWT_SECRET = process.env.JWT_SECRET || 'XX';
-
-const upload = multer({ storage: multer.memoryStorage() });
 
 async function startServer() {
   const app = express();

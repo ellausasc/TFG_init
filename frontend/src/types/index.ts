@@ -75,6 +75,14 @@ export interface News {
   section?: Partial<Section>;
 }
 
+export interface ActivityDocument {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  createdAt: string;
+}
+
 export interface Activity {
   id: string;
   title: string;
@@ -91,9 +99,11 @@ export interface Activity {
   mainImage?: string;
   secondaryImage?: string;
   slug: string;
+  isPrivate?: boolean;
   author?: Partial<User>;
   section?: Partial<Section>;
   participants?: Partial<User>[];
+  documents?: ActivityDocument[];
 }
 
 export interface AuthPayload {
@@ -127,12 +137,19 @@ export interface NewsFilterInput {
   authorId?: number;
 }
 
+export interface AttachmentInput {
+  name: string;
+  url: string;
+  type: string;
+}
+
 export interface CreateActivityInput {
   title: string;
   shortDescription: string;
   longDescription: string;
   status?: string;
   type?: string;
+  isPrivate?: boolean;
   activityDate: string;
   registrationStartDate?: string | null;
   registrationEndDate?: string | null;
@@ -140,6 +157,8 @@ export interface CreateActivityInput {
   mainImage?: string;
   secondaryImage?: string;
   sectionId: number;
+  attachments?: AttachmentInput[];
+  removeDocumentIds?: string[];
 }
 
 export interface ActivityFilterInput {

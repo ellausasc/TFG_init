@@ -20,8 +20,83 @@ const { user } = Astro.props;
   </div>
 </form>
 
+<!-- Botó que obre el popup de canvi de contrasenya (RF-2.1 / CU-04) -->
+<div class="max-w-md mx-auto mt-10 pt-8 border-t border-gray-100 flex justify-center">
+  <button
+    type="button"
+    id="open-password-modal-btn"
+    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+    </svg>
+    Canviar contrasenya
+  </button>
+</div>
+
+<!-- Popup / modal de canvi de contrasenya -->
+<div
+  id="password-modal-overlay"
+  class="hidden fixed inset-0 z-50 items-center justify-center bg-black/50 p-4"
+>
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-8 relative">
+    <button
+      type="button"
+      id="close-password-modal-btn"
+      class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+      aria-label="Tancar"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+      </svg>
+    </button>
+
+    <h3 class="text-xl font-bold text-gray-900 mb-6 text-center">Canviar contrasenya</h3>
+
+    <form id="password-form" novalidate>
+      <div class="mb-5">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Contrasenya actual</label>
+        <input
+          type="password"
+          name="oldPassword"
+          required
+          class="w-full px-4 py-3 border-2 placeholder:text-gray-400 rounded-md outline-none focus:ring-4 border-gray-300 focus:border-gray-600 ring-gray-100"
+        />
+      </div>
+
+      <div class="mb-5">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nova contrasenya</label>
+        <input
+          type="password"
+          name="newPassword"
+          required
+          minlength="4"
+          class="w-full px-4 py-3 border-2 placeholder:text-gray-400 rounded-md outline-none focus:ring-4 border-gray-300 focus:border-gray-600 ring-gray-100"
+        />
+      </div>
+
+      <div class="mb-5">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar nova contrasenya</label>
+        <input
+          type="password"
+          name="newPasswordConfirm"
+          required
+          minlength="4"
+          class="w-full px-4 py-3 border-2 placeholder:text-gray-400 rounded-md outline-none focus:ring-4 border-gray-300 focus:border-gray-600 ring-gray-100"
+        />
+      </div>
+
+      <div class="flex items-center justify-center gap-3 mt-8">
+        <Button type="submit" size="lg">Confirmar canvi</Button>
+      </div>
+
+      <div id="password-result" class="text-center font-medium mt-3 hidden"></div>
+    </form>
+  </div>
+</div>
+
 <script>
-  import { updateMe } from "../../services/usersService";
+  import { updateMe, changePassword } from "../../services/usersService";
   import { uploadGenericFile } from "../../utils";
 
   const form = document.getElementById("profile-form") as HTMLFormElement;
@@ -29,10 +104,10 @@ const { user } = Astro.props;
 
   function hydrateForm() {
     if (!form || !form.dataset.user) return;
-    
+
     // Llegim l'usuari que ha vingut del servidor
     const user = JSON.parse(form.dataset.user);
-    
+
     // Omplim els camps automàticament
     Object.keys(user).forEach(key => {
       if (key === 'profileImage') return;
@@ -54,7 +129,7 @@ const { user } = Astro.props;
       if (preview && placeholder) {
         const pictureWrapper = preview.closest('picture');
         if (pictureWrapper) pictureWrapper.querySelectorAll('source').forEach(s => s.remove());
-        
+
         preview.classList.remove('hidden');
         preview.removeAttribute('srcset');
         preview.src = user.profileImage;
@@ -66,7 +141,7 @@ const { user } = Astro.props;
   // Executem l'ompliment
   hydrateForm();
 
-  // Gestió de l'enviament (Submit)
+  // Gestió de l'enviament (Submit) del perfil
   if(form) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -98,7 +173,7 @@ const { user } = Astro.props;
         if (profileImageUrl) updateData.profileImage = profileImageUrl;
 
         await updateMe(updateData);
-        
+
         if(result) {
           result.textContent = "Perfil actualitzat correctament!";
           result.className = "text-center font-medium mt-3 text-green-500 block";
@@ -108,6 +183,92 @@ const { user } = Astro.props;
         if(result) {
           result.textContent = err.message || "Error al desar els canvis.";
           result.className = "text-center font-medium mt-3 text-red-500 block";
+        }
+      }
+    });
+  }
+
+  // --- Popup de canvi de contrasenya (RF-2.1 / CU-04) ---
+  const openBtn = document.getElementById("open-password-modal-btn");
+  const closeBtn = document.getElementById("close-password-modal-btn");
+  const overlay = document.getElementById("password-modal-overlay");
+  const passwordForm = document.getElementById("password-form") as HTMLFormElement;
+  const passwordResult = document.getElementById("password-result");
+
+  function openModal() {
+    overlay?.classList.remove("hidden");
+    overlay?.classList.add("flex");
+  }
+
+  function closeModal() {
+    overlay?.classList.add("hidden");
+    overlay?.classList.remove("flex");
+    passwordForm?.reset();
+    passwordResult?.classList.add("hidden");
+  }
+
+  openBtn?.addEventListener("click", openModal);
+  closeBtn?.addEventListener("click", closeModal);
+
+  // Tancar en clicar fora del quadre (sobre l'overlay fosc)
+  overlay?.addEventListener("click", (e) => {
+    if (e.target === overlay) closeModal();
+  });
+
+  // Tancar amb la tecla Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !overlay?.classList.contains("hidden")) closeModal();
+  });
+
+  if (passwordForm) {
+    passwordForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (!passwordForm.checkValidity()) {
+        // El formulari té novalidate, així que el navegador NO mostra el
+        // seu tooltip natiu d'error: si no ho gestionem explícitament,
+        // l'usuari no veu cap feedback en absolut i sembla que "no fa res".
+        const invalidEl = passwordForm.querySelector(":invalid") as HTMLElement | null;
+        invalidEl?.focus();
+        if (passwordResult) {
+          passwordResult.textContent = "Revisa els camps: cal omplir-los tots i la nova contrasenya ha de tenir almenys 6 caràcters.";
+          passwordResult.className = "text-center font-medium mt-3 text-red-500 block";
+        }
+        return;
+      }
+
+      const formData = new FormData(passwordForm);
+      const oldPassword = formData.get("oldPassword") as string;
+      const newPassword = formData.get("newPassword") as string;
+      const newPasswordConfirm = formData.get("newPasswordConfirm") as string;
+
+      if (newPassword !== newPasswordConfirm) {
+        if (passwordResult) {
+          passwordResult.textContent = "Les noves contrasenyes no coincideixen!";
+          passwordResult.className = "text-center font-medium mt-3 text-red-500 block";
+        }
+        return;
+      }
+
+      if (passwordResult) {
+        passwordResult.textContent = "Actualitzant contrasenya...";
+        passwordResult.className = "text-center font-medium mt-3 text-blue-500 block";
+      }
+
+      try {
+        await changePassword(oldPassword, newPassword);
+
+        if (passwordResult) {
+          passwordResult.textContent = "Contrasenya actualitzada correctament!";
+          passwordResult.className = "text-center font-medium mt-3 text-green-500 block";
+        }
+        passwordForm.reset();
+        setTimeout(closeModal, 1500);
+      } catch (err: any) {
+        console.error("Error en canviar la contrasenya:", err);
+        if (passwordResult) {
+          passwordResult.textContent = err.message || "Error en canviar la contrasenya.";
+          passwordResult.className = "text-center font-medium mt-3 text-red-500 block";
         }
       }
     });
