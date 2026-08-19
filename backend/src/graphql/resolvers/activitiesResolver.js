@@ -17,8 +17,20 @@ const formatActivity = (activity) => {
   // llegir l'activitat, tambe pot veure la seva llista d'adjunts.
   const attachmentDocs = documents.filter((doc) => doc.usage === 'ATTACHMENT');
 
+  // Camps calculats d'ocupacio (RF-2.2 / RF-3.3). Es deriven de la relacio
+  // `participants` i del camp `capacity`, i permeten que el frontend mostri
+  // les places disponibles i desactivi el boto d'inscripcio sense haver de
+  // recuperar la llista completa de participants.
+  const participants = activity.participants || [];
+  const enrolledCount = participants.length;
+  const hasCapacity = activity.capacity !== null && activity.capacity !== undefined;
+
   return {
     ...activity,
+    enrolledCount,
+    availableSpots: hasCapacity ? Math.max(activity.capacity - enrolledCount, 0) : null,
+    isFull: activitiesService.isFull(activity),
+    isEnrollmentOpen: activitiesService.isEnrollmentOpen(activity),
     createdAt: activity.createdAt ? activity.createdAt.toISOString() : null,
     publishedAt: activity.publishedAt ? activity.publishedAt.toISOString() : null,
     activityDate: activity.activityDate ? activity.activityDate.toISOString() : null,
@@ -84,6 +96,22 @@ module.exports = {
     enrollInActivity: async (_, { activityId }, context) => {
       // Passem l'activityId i l'userId (del context) al servei
       return await activitiesService.enroll(activityId, context.userId);
+    },
+
+    // RF-2.2: el soci anul·la la seva propia inscripcio (userId ve del token).
+    unenrollFromActivity: async (_, { activityId }, context) => {
+      return await activitiesService.unenroll(activityId, context.userId);
+    },
+
+    // RF-3.3 / CU-11: gestio de les inscripcions per part d'un administrador.
+    // Aqui l'userId arriba com a argument, no del token, perque l'operacio
+    // s'aplica sobre un tercer.
+    addParticipantToActivity: async (_, { activityId, userId }) => {
+      return await activitiesService.addParticipant(activityId, userId);
+    },
+
+    removeParticipantFromActivity: async (_, { activityId, userId }) => {
+      return await activitiesService.removeParticipant(activityId, userId);
     },
   }
 };

@@ -60,7 +60,7 @@ const initialData = { ...news, sectionId: news.section?.id };
     const longDescInput = document.getElementById("newsLong") as HTMLInputElement;
 
     const input = {
-      title: formData.get("title"),
+      title: String(formData.get("title") || ""),
       shortDescription: shortDescInput?.value || "",
       longDescription: longDescInput?.value || "",
       sectionId: parseInt(formData.get("sectionId") as string),

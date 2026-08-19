@@ -1,0 +1,75 @@
+---
+// src/components/global/CookieBanner.astro
+// Avis de galetes exigit per l'article 22.2 de la LSSICE (vegeu memoria,
+// seccio 2.3). La plataforma nomes utilitza una galeta tecnica (`token`, de
+// sessio i httpOnly) i cap galeta analitica ni publicitaria, de manera que el
+// banner es merament informatiu: no bloqueja la navegacio ni carrega res de
+// tercers en funcio de la resposta.
+//
+// La decisio de l'usuari es desa a localStorage (no en una galeta), per no
+// afegir cap identificador addicional al navegador.
+---
+
+<div
+  id="cookie-banner"
+  class="fixed bottom-0 inset-x-0 z-50 hidden"
+  role="dialog"
+  aria-live="polite"
+  aria-label="Avís de galetes">
+  <div class="mx-auto max-w-screen-lg m-4 bg-white border border-gray-200 rounded-xl shadow-lg p-5">
+    <div class="flex flex-col md:flex-row md:items-center gap-4">
+      <p class="text-sm text-gray-600 leading-relaxed flex-1">
+        Aquest lloc utilitza únicament <strong class="font-medium text-gray-900"
+          >galetes tècniques</strong
+        > necessàries per mantenir la teva sessió iniciada. No fem servir galetes
+        analítiques ni publicitàries.
+        <a
+          href="/legal/cookies"
+          class="text-blue-600 hover:text-blue-800 underline font-medium">
+          Més informació
+        </a>
+      </p>
+
+      <div class="flex gap-3 shrink-0">
+        <button
+          id="cookie-accept"
+          type="button"
+          class="rounded text-center transition focus-visible:ring-2 ring-offset-2 ring-gray-200 px-5 py-2.5 bg-black text-white hover:bg-slate-900 border-2 border-transparent text-sm font-medium">
+          D'acord
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Clau amb la qual es recorda que l'usuari ja ha vist l'avis.
+  const STORAGE_KEY = "associat_cookie_notice";
+
+  const banner = document.getElementById("cookie-banner");
+  const acceptBtn = document.getElementById("cookie-accept");
+
+  if (banner && acceptBtn) {
+    // Nomes es mostra el banner si l'usuari encara no l'ha tancat mai.
+    let alreadyAccepted = false;
+    try {
+      alreadyAccepted = window.localStorage.getItem(STORAGE_KEY) === "accepted";
+    } catch (error) {
+      // Si el navegador te l'emmagatzematge bloquejat, mostrem l'avis igualment.
+      console.warn("No s'ha pogut llegir la preferència de galetes:", error);
+    }
+
+    if (!alreadyAccepted) {
+      banner.classList.remove("hidden");
+    }
+
+    acceptBtn.addEventListener("click", () => {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, "accepted");
+      } catch (error) {
+        console.warn("No s'ha pogut desar la preferència de galetes:", error);
+      }
+      banner.classList.add("hidden");
+    });
+  }
+</script>

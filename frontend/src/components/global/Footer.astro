@@ -1,0 +1,96 @@
+---
+// src/components/global/Footer.astro
+// Peu de pagina comu a tot el portal. A mes de la navegacio secundaria,
+// concentra els enllacos legals exigits per l'RGPD/LOPDGDD i la LSSICE
+// (vegeu memoria, seccions 2.3 i 10.2), que han de ser accessibles des de
+// qualsevol pagina del lloc.
+import Container from "../ui/Container.astro";
+import { Icon } from "astro-icon/components";
+
+const currentYear = new Date().getFullYear();
+
+// Navegacio secundaria: replica els accessos principals del portal public.
+const navLinks = [
+  { title: "Notícies", path: "/news" },
+  { title: "Activitats", path: "/activities" },
+  { title: "Qui som?", path: "/about" },
+  { title: "Contacte", path: "/contact" },
+];
+
+// Enllacos d'informacio legal (LSSICE art. 10 i RGPD art. 13).
+const legalLinks = [
+  { title: "Avís legal", path: "/legal/avis-legal" },
+  { title: "Política de privacitat", path: "/legal/privacitat" },
+  { title: "Política de cookies", path: "/legal/cookies" },
+];
+---
+
+<footer class="mt-24 border-t border-gray-100 bg-gray-50">
+  <Container>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10 py-12">
+      <!-- Identitat de l'entitat -->
+      <div>
+        <span class="font-bold text-slate-800 text-lg">Associa't</span>
+        <p class="text-sm text-slate-500 mt-3 leading-relaxed max-w-xs">
+          Plataforma de gestió de membres, esdeveniments i governança interna
+          per a associacions sense ànim de lucre.
+        </p>
+      </div>
+
+      <!-- Navegacio secundaria -->
+      <div>
+        <h2 class="font-medium text-slate-800 mb-3">Navegació</h2>
+        <ul class="space-y-2">
+          {
+            navLinks.map((link) => (
+              <li>
+                <a
+                  href={link.path}
+                  class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                  {link.title}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <!-- Informacio legal i contacte -->
+      <div>
+        <h2 class="font-medium text-slate-800 mb-3">Informació legal</h2>
+        <ul class="space-y-2">
+          {
+            legalLinks.map((link) => (
+              <li>
+                <a
+                  href={link.path}
+                  class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                  {link.title}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+
+        <div class="mt-5 space-y-2">
+          <div class="flex items-center space-x-2 text-gray-600 text-sm">
+            <Icon class:list="text-gray-400 w-4 h-4" name="uil:map-marker" />
+            <span>17003 Girona</span>
+          </div>
+          <div class="flex items-center space-x-2 text-gray-600 text-sm">
+            <Icon class:list="text-gray-400 w-4 h-4" name="uil:envelope" />
+            <a href="mailto:tfg@udg.edu" class="hover:text-gray-900 transition-colors">
+              tfg@udg.edu
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t border-gray-200 py-6 text-center">
+      <p class="text-xs text-slate-500">
+        © {currentYear} Associa't · Projecte Final de Grau · Universitat de Girona
+      </p>
+    </div>
+  </Container>
+</footer>

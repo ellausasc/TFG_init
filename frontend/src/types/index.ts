@@ -104,6 +104,10 @@ export interface Activity {
   section?: Partial<Section>;
   participants?: Partial<User>[];
   documents?: ActivityDocument[];
+  enrolledCount?: number;
+  availableSpots?: number | null;
+  isFull?: boolean;
+  isEnrollmentOpen?: boolean;
 }
 
 export interface AuthPayload {

@@ -7,6 +7,10 @@ import {
   CREATE_ACTIVITY_MUTATION,
   UPDATE_ACTIVITY_MUTATION,
   ENROLL_MUTATION,
+  UNENROLL_MUTATION,
+  GET_ACTIVITY_PARTICIPANTS,
+  ADD_PARTICIPANT_MUTATION,
+  REMOVE_PARTICIPANT_MUTATION,
 } from "./graphql/activities.queries";
 import type {
   Activity,
@@ -110,4 +114,56 @@ export async function enrollInActivity(
     headers,
   );
   return data.enrollInActivity;
+}
+
+export async function unenrollFromActivity(
+  activityId: string,
+  headers: Record<string, string> = {},
+): Promise<boolean> {
+  const data = await fetchGraphQL<{ unenrollFromActivity: boolean }>(
+    UNENROLL_MUTATION,
+    { activityId },
+    headers,
+  );
+  return data.unenrollFromActivity;
+}
+
+export async function getActivityParticipants(
+  id: string,
+  headers: Record<string, string> = {},
+): Promise<Activity | null> {
+  const data = await fetchGraphQL<{ getActivityById: Activity }>(
+    GET_ACTIVITY_PARTICIPANTS,
+    { id },
+    headers,
+  );
+  return data.getActivityById;
+}
+
+
+export async function addParticipantToActivity(
+  activityId: string,
+  userId: string,
+  headers: Record<string, string> = {},
+): Promise<boolean> {
+  const data = await fetchGraphQL<{ addParticipantToActivity: boolean }>(
+    ADD_PARTICIPANT_MUTATION,
+    { activityId, userId },
+    headers,
+  );
+  return data.addParticipantToActivity;
+}
+
+
+export async function removeParticipantFromActivity(
+  activityId: string,
+  userId: string,
+  headers: Record<string, string> = {},
+): Promise<boolean> {
+  const data = await fetchGraphQL<{ removeParticipantFromActivity: boolean }>(
+    REMOVE_PARTICIPANT_MUTATION,
+    { activityId, userId },
+    headers,
+  );
+  return data.removeParticipantFromActivity;
 }

@@ -5,7 +5,7 @@ import SectionHead from "../../../../components/ui/SectionHead.astro";
 import Button from "../../../../components/ui/Button.astro";
 import SectionFields from "../../../../components/sections/SectionFields.astro";
 import NewsFields from "../../../../components/news/NewsFields.astro";
-import { getSectionById, updateSection } from "../../../../services/sectionsService";
+import { getSectionById } from "../../../../services/sectionsService";
 
 export const prerender = false;
 
@@ -82,11 +82,11 @@ if (!section) return Astro.redirect('/404');
     const longDesc = document.getElementById("newsLong") as HTMLInputElement;
 
     const input = {
-      name: formData.get("name"),
-      description: formData.get("description"),
+      name: String(formData.get("name") || ""),
+      description: String(formData.get("description") || ""),
       isActive: formData.get("isActive") === "on",
       mainNews: {
-        title: formData.get("name"),
+        title: String(formData.get("name") || ""),
         shortDescription: shortDesc?.value || "",
         longDescription: longDesc?.value || "",
         status: "PUBLISHED",

@@ -65,4 +65,14 @@ const enroll = async (activityId, userId) => {
   });
 };
 
-module.exports = { findAll, findBySlug, findById, findFiltered, findSlugExceptId, create, update, enroll };
+// Desfa la inscripcio d'un usuari en una activitat (RF-2.2 i RF-3.3):
+// nomes desconnecta la relacio M:N `participants`, sense esborrar l'usuari.
+const unenroll = async (activityId, userId) => {
+  return await prisma.activity.update({
+    where: { id: activityId },
+    data: { participants: { disconnect: { id: userId } } },
+    include: { author: true, section: true, participants: true, documents: true }
+  });
+};
+
+module.exports = { findAll, findBySlug, findById, findFiltered, findSlugExceptId, create, update, enroll, unenroll };

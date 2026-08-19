@@ -61,12 +61,22 @@ const initialData = { ...activity, sectionId: activity.section?.id };
 
 <Layout title={`Editar activitat: ${activity.title}`}>
   <Container>
-    <SectionHead>
-      <Fragment slot="title">Editar activitat: {activity.title}</Fragment>
-      <Fragment slot="desc">
-        Modifica les dades de l'activitat i la seva documentació adjunta.
-      </Fragment>
-    </SectionHead>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <SectionHead>
+        <Fragment slot="title">Editar activitat: {activity.title}</Fragment>
+        <Fragment slot="desc">
+          Modifica les dades de l'activitat i la seva documentació adjunta.
+        </Fragment>
+      </SectionHead>
+
+      <!-- Accés directe a la gestió d'inscripcions (RF-3.3) -->
+      <a
+        href={`/admin/activities/${activity.id}/participants`}
+        class="inline-flex items-center justify-center px-6 py-3 border border-gray-200 text-base font-medium rounded-md text-gray-700 bg-white hover:border-gray-900 hover:bg-gray-50 transition-colors shadow-sm whitespace-nowrap mt-16 sm:mt-0"
+      >
+        Gestionar inscripcions
+      </a>
+    </div>
   </Container>
 
   <Container class="pt-16 pb-24">
@@ -122,19 +132,19 @@ const initialData = { ...activity, sectionId: activity.section?.id };
       }
 
       const input = {
-        title: formData.get("title"),
+        title: String(formData.get("title") || ""),
         shortDescription: shortDescInput?.value || "",
         longDescription: longDescInput?.value || "",
         sectionId: parseInt(formData.get("sectionId") as string),
         status: formData.get("status") === "on" ? "PUBLISHED" : "DRAFT",
-        type: formData.get("type"),
+        type: String(formData.get("type") || ""),
         isPrivate,
         capacity: capacityValue ? parseInt(capacityValue) : null,
         activityDate: new Date(formData.get("activityDate") as string).toISOString(),
         registrationStartDate: regStart ? new Date(regStart).toISOString() : null,
         registrationEndDate: regEnd ? new Date(regEnd).toISOString() : null,
-        mainImage: formData.get("mainImage") || null,
-        secondaryImage: formData.get("secondaryImage") || null,
+        mainImage: String(formData.get("mainImage") || "") || undefined,
+        secondaryImage: String(formData.get("secondaryImage") || "") || undefined,
         attachments,
         removeDocumentIds,
       };

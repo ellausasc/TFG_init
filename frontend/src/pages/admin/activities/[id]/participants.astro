@@ -1,0 +1,298 @@
+---
+// src/pages/admin/activities/[id]/participants.astro
+// RF-3.3 / CU-11: gestio de les inscripcions d'una activitat. Fins ara el
+// panell d'administracio permetia crear i editar activitats, pero no consultar
+// ni modificar la llista de socis inscrits.
+import Layout from "../../../../layouts/Layout.astro";
+import Container from "../../../../components/ui/Container.astro";
+import SectionHead from "../../../../components/ui/SectionHead.astro";
+import Button from "../../../../components/ui/Button.astro";
+import { getActivityParticipants } from "../../../../services/activitiesService";
+import { getAllUsers } from "../../../../services/usersService";
+
+export const prerender = false;
+
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/auth/login");
+}
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect("/admin/activities");
+
+// En SSR el fetch del servidor no adjunta les galetes del navegador: cal
+// reenviar-la perque el backend apliqui els permisos de l'usuari.
+const token = Astro.cookies.get("token")!.value;
+const headers = { Cookie: `token=${token}` };
+
+const activity = await getActivityParticipants(id, headers);
+if (!activity) return Astro.redirect("/404");
+
+const participants = activity.participants || [];
+
+// El llistat complet d'usuaris nomes es necessari per al desplegable d'alta
+// manual, i requereix permis de lectura sobre el modul USERS. Un gestor
+// d'activitats sense aquest permis ha de poder consultar i donar de baixa
+// inscripcions igualment, per aixo la consulta va dins d'un try/catch i el
+// formulari d'alta simplement no es mostra si no hi te acces.
+let assignableUsers: any[] = [];
+let canAddParticipants = true;
+try {
+  const allUsers = await getAllUsers(headers);
+  const enrolledIds = new Set(participants.map((p: any) => String(p.id)));
+  assignableUsers = allUsers
+    .filter((user: any) => !enrolledIds.has(String(user.id)) && !user.deletedAt)
+    .sort((a: any, b: any) => a.lastName1.localeCompare(b.lastName1, "ca"));
+} catch (error) {
+  console.warn("No es poden llistar els usuaris per afegir participants:", error);
+  canAddParticipants = false;
+}
+
+// Format de dates coherent amb la resta del panell.
+const formatDate = (value?: string | null) =>
+  value ? new Date(value).toLocaleDateString("ca-ES") : null;
+
+const activityDate = formatDate(activity.activityDate);
+
+// Ocupacio: `capacity` es opcional, de manera que l'activitat pot no tenir
+// aforament limitat.
+const hasCapacity = activity.capacity !== null && activity.capacity !== undefined;
+const occupancyLabel = hasCapacity
+  ? `${activity.enrolledCount ?? participants.length} / ${activity.capacity}`
+  : `${activity.enrolledCount ?? participants.length} (sense límit)`;
+---
+
+<Layout title={`Inscripcions: ${activity.title}`}>
+  <Container>
+    <div
+      class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+      <SectionHead align="left">
+        <Fragment slot="title">Inscripcions</Fragment>
+        <Fragment slot="desc">
+          Gestiona els socis inscrits a «{activity.title}».
+        </Fragment>
+      </SectionHead>
+
+      <a
+        href={`/admin/activities/${activity.id}/edit`}
+        class="inline-flex items-center justify-center px-6 py-3 border border-gray-200 text-base font-medium rounded-md text-gray-700 bg-white hover:border-gray-900 hover:bg-gray-50 transition-colors shadow-sm whitespace-nowrap">
+        Editar activitat
+      </a>
+    </div>
+
+    <main class="mt-4 pb-24">
+      <!-- Resum d'ocupacio -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+            Inscrits
+          </p>
+          <p class="text-2xl font-bold text-slate-900 mt-1">{occupancyLabel}</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+            Places lliures
+          </p>
+          <p class="text-2xl font-bold text-slate-900 mt-1">
+            {hasCapacity ? activity.availableSpots : "—"}
+          </p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+            Aforament
+          </p>
+          <p class="text-2xl font-bold mt-1">
+            {
+              activity.isFull ? (
+                <span class="text-red-600">Complet</span>
+              ) : (
+                <span class="text-green-600">Disponible</span>
+              )
+            }
+          </p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+            Data
+          </p>
+          <p class="text-2xl font-bold text-slate-900 mt-1">{activityDate}</p>
+        </div>
+      </div>
+
+      <!-- Alta manual d'un soci -->
+      {
+        canAddParticipants && (
+          <div class="bg-gray-50 border border-gray-100 rounded-xl p-6 mb-8">
+            <h2 class="font-medium text-lg text-gray-800 mb-1">
+              Afegir un participant
+            </h2>
+            <p class="text-sm text-gray-500 mb-4">
+              L'alta manual respecta l'aforament, però no els terminis
+              d'inscripció: permet registrar altes presencials o de darrera hora.
+            </p>
+
+            <form id="add-participant-form" class="flex flex-col sm:flex-row gap-3">
+              <select
+                id="user-select"
+                name="userId"
+                required
+                class="flex-1 px-4 py-3 border-2 rounded-md outline-none focus:ring-4 border-gray-300 focus:border-gray-600 ring-gray-100 bg-white">
+                <option value="">Selecciona un soci...</option>
+                {assignableUsers.map((user: any) => (
+                  <option value={user.id}>
+                    {user.lastName1} {user.lastName2 || ""}, {user.firstName} ({user.code})
+                  </option>
+                ))}
+              </select>
+              <Button type="submit" size="lg">Inscriure</Button>
+            </form>
+
+            {assignableUsers.length === 0 && (
+              <p class="text-sm text-gray-400 italic mt-3">
+                Tots els socis registrats ja consten com a inscrits.
+              </p>
+            )}
+          </div>
+        )
+      }
+
+      <div id="participants-result" class="font-medium mb-4 hidden text-center"></div>
+
+      <!-- Llistat de participants -->
+      <div class="overflow-x-auto border border-gray-200 rounded-lg">
+        <table class="w-full text-sm text-left text-gray-600">
+          <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
+            <tr>
+              <th class="px-6 py-3">Codi</th>
+              <th class="px-6 py-3">Nom</th>
+              <th class="px-6 py-3">Email</th>
+              <th class="px-6 py-3">Telèfon</th>
+              <th class="px-6 py-3 text-right">Accions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 bg-white">
+            {
+              participants.map((participant: any) => (
+                <tr class="hover:bg-gray-50" data-user-row={participant.id}>
+                  <td class="px-6 py-3 font-mono text-xs text-gray-500">
+                    {participant.code}
+                  </td>
+                  <td class="px-6 py-3 font-medium text-gray-900">
+                    {participant.firstName} {participant.lastName1}{" "}
+                    {participant.lastName2 || ""}
+                  </td>
+                  <td class="px-6 py-3">{participant.email}</td>
+                  <td class="px-6 py-3">
+                    {participant.phone || (
+                      <span class="text-gray-400 italic">No indicat</span>
+                    )}
+                  </td>
+                  <td class="px-6 py-3 text-right">
+                    <button
+                      type="button"
+                      data-remove-user={participant.id}
+                      class="text-red-600 hover:text-red-800 font-medium text-xs">
+                      Donar de baixa
+                    </button>
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+
+        {
+          participants.length === 0 && (
+            <p class="text-center text-gray-500 italic py-8">
+              Encara no hi ha cap soci inscrit en aquesta activitat.
+            </p>
+          )
+        }
+      </div>
+
+      <div class="mt-10 text-center">
+        <a
+          href="/admin/activities"
+          class="inline-block bg-white border-2 border-gray-200 px-6 py-3 rounded-xl hover:border-gray-900 hover:bg-gray-50 transition font-medium text-gray-700">
+          ← Tornar al llistat d'activitats
+        </a>
+      </div>
+    </main>
+  </Container>
+</Layout>
+
+<!-- Passem l'identificador de l'activitat al script de client -->
+<script define:vars={{ activityId: id }}>
+  window.activityId = activityId;
+</script>
+
+<script>
+  import {
+    addParticipantToActivity,
+    removeParticipantFromActivity,
+  } from "../../../../services/activitiesService";
+
+  const activityId = (window as any).activityId as string;
+  const result = document.getElementById("participants-result");
+
+  /** Mostra un missatge d'estat amb el mateix estil que la resta del panell. */
+  const showMessage = (text: string, tone: "info" | "success" | "error") => {
+    if (!result) return;
+    const colors = {
+      info: "text-blue-600",
+      success: "text-green-600",
+      error: "text-red-600",
+    };
+    result.innerText = text;
+    result.className = `font-medium mb-4 block text-center ${colors[tone]}`;
+  };
+
+  // --- Alta manual d'un participant ---
+  const addForm = document.getElementById("add-participant-form") as HTMLFormElement | null;
+
+  addForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const select = document.getElementById("user-select") as HTMLSelectElement;
+    const userId = select.value;
+    if (!userId) return;
+
+    try {
+      showMessage("Inscrivint el soci...", "info");
+      await addParticipantToActivity(activityId, userId);
+      showMessage("Soci inscrit correctament. Actualitzant...", "success");
+      // Recarreguem per refrescar el llistat i el comptador d'ocupacio.
+      setTimeout(() => window.location.reload(), 800);
+    } catch (error: any) {
+      showMessage("Error: " + error.message, "error");
+    }
+  });
+
+  // --- Baixa d'un participant ---
+  document.querySelectorAll<HTMLButtonElement>("[data-remove-user]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const userId = button.dataset.removeUser;
+      if (!userId) return;
+
+      if (!window.confirm("Segur que vols donar de baixa aquesta inscripció?")) {
+        return;
+      }
+
+      button.disabled = true;
+      button.classList.add("opacity-50", "cursor-not-allowed");
+
+      try {
+        showMessage("Donant de baixa la inscripció...", "info");
+        await removeParticipantFromActivity(activityId, userId);
+        showMessage("Inscripció anul·lada correctament. Actualitzant...", "success");
+        setTimeout(() => window.location.reload(), 800);
+      } catch (error: any) {
+        showMessage("Error: " + error.message, "error");
+        button.disabled = false;
+        button.classList.remove("opacity-50", "cursor-not-allowed");
+      }
+    });
+  });
+</script>

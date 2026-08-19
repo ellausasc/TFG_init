@@ -27,7 +27,7 @@ const [formData, role, allUsers] = await Promise.all([
 if (!role) return Astro.redirect('/admin/roles');
 
 // Formatem els permisos que venen de la DB al format que espera el nostre formulari (RoleForm)
-const formattedPermissions = role.permission.map((p: any) => ({
+const formattedPermissions = (role.permission || []).map((p: any) => ({
   id: p.id, // Guardem l'ID original per si s'ha d'esborrar
   moduleId: p.module.id,
   moduleName: p.module.name,
@@ -73,7 +73,7 @@ const initialData = {
         <div class="lg:col-span-1">
           <RoleUsersAssignment 
             roleId={id} 
-            assignedUsers={role.users} 
+            assignedUsers={role.users || []} 
             allUsers={allUsers} 
           />
         </div>

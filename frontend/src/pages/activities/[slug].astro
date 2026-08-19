@@ -6,6 +6,7 @@ import Container from "../../components/ui/Container.astro";
 
 // Assegura't que la ruta sigui correcta segons el teu projecte
 import { getActivityBySlug } from "../../services/activitiesService";
+import { jwtDecode } from "jwt-decode";
 
 const { slug } = Astro.params;
 
@@ -42,6 +43,41 @@ const regStart = formatDate(activity.registrationStartDate);
 const regEnd = formatDate(activity.registrationEndDate);
 
 const authorName = activity.author ? `${activity.author.firstName} ${activity.author.lastName1}` : 'Autor Desconegut';
+
+// --- Estat de les inscripcions (RF-2.2 / CU-05) ---------------------------
+// El backend calcula `enrolledCount`, `availableSpots`, `isFull` i
+// `isEnrollmentOpen` a partir de `capacity` i del periode d'inscripcio, de
+// manera que aqui nomes cal representar-los.
+const hasCapacity = activity.capacity !== null && activity.capacity !== undefined;
+const enrolledCount = activity.enrolledCount ?? 0;
+const isFull = activity.isFull === true;
+const isEnrollmentOpen = activity.isEnrollmentOpen !== false;
+
+// Per saber si l'usuari ja hi esta inscrit comparem el seu id amb la llista de
+// participants. Nomes te sentit si hi ha sessio iniciada.
+let currentUserId: string | null = null;
+if (token) {
+  try {
+    const payload: any = jwtDecode(token);
+    currentUserId = payload.userId ? String(payload.userId) : null;
+  } catch (error) {
+    console.error("Error decodificant el token:", error);
+  }
+}
+
+const isAlreadyEnrolled = currentUserId
+  ? (activity.participants || []).some((p: any) => String(p.id) === currentUserId)
+  : false;
+
+// El boto nomes s'ha d'habilitar si es pot fer l'accio; en cas contrari
+// n'expliquem el motiu.
+const canEnroll = !isAlreadyEnrolled && !isFull && isEnrollmentOpen;
+
+let enrollDisabledReason = "";
+if (!isAlreadyEnrolled) {
+  if (isFull) enrollDisabledReason = "Aforament complet";
+  else if (!isEnrollmentOpen) enrollDisabledReason = "Inscripcions tancades";
+}
 ---
 
 <Layout title={activity.title}>
@@ -87,6 +123,18 @@ const authorName = activity.author ? `${activity.author.firstName} ${activity.au
               <span class="capitalize">{activityDate}</span>
             </li>
             
+            <li>
+              <span class="block font-semibold text-gray-900">Places:</span>
+              {hasCapacity ? (
+                <span class={isFull ? "text-red-600 font-medium" : "text-green-700 font-medium"}>
+                  {enrolledCount} de {activity.capacity} ocupades
+                  {!isFull && ` · ${activity.availableSpots} lliures`}
+                </span>
+              ) : (
+                <span>{enrolledCount} inscrits · sense límit d'aforament</span>
+              )}
+            </li>
+
             {(regStart || regEnd) && (
               <li class="bg-blue-50 p-3 rounded-lg border border-blue-100 mt-4">
                 <span class="block font-semibold text-blue-900 mb-1">Període d'inscripció:</span>
@@ -96,14 +144,41 @@ const authorName = activity.author ? `${activity.author.firstName} ${activity.au
             )}
           </ul>
 
-          <button 
-            id="enroll-btn" 
-            data-activity-id={activity.id}
-            class="w-full bg-gray-900 text-white font-semibold py-3 px-4 rounded-xl hover:bg-gray-800 transition-colors shadow-md flex justify-center items-center gap-2"
-          >
-            <span>Inscriure'm ara</span>
-          </button>
-          
+          {/* Estat de la inscripcio de l'usuari actual. El boto canvia de
+              funcio segons si ja hi esta inscrit, si hi ha places o si el
+              periode d'inscripcio es obert. */}
+          {isAlreadyEnrolled ? (
+            <button
+              id="unenroll-btn"
+              data-activity-id={activity.id}
+              class="w-full bg-white border-2 border-red-200 text-red-600 font-semibold py-3 px-4 rounded-xl hover:bg-red-50 hover:border-red-400 transition-colors flex justify-center items-center gap-2"
+            >
+              <span>Anul·lar la meva inscripció</span>
+            </button>
+          ) : canEnroll ? (
+            <button
+              id="enroll-btn"
+              data-activity-id={activity.id}
+              class="w-full bg-gray-900 text-white font-semibold py-3 px-4 rounded-xl hover:bg-gray-800 transition-colors shadow-md flex justify-center items-center gap-2"
+            >
+              <span>Inscriure'm ara</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled
+              class="w-full bg-gray-200 text-gray-500 font-semibold py-3 px-4 rounded-xl cursor-not-allowed flex justify-center items-center gap-2"
+            >
+              <span>{enrollDisabledReason}</span>
+            </button>
+          )}
+
+          {isAlreadyEnrolled && (
+            <p class="text-xs text-green-700 text-center mt-3 font-medium">
+              Ja estàs inscrit en aquesta activitat.
+            </p>
+          )}
+
           <p id="enroll-message" class="text-sm font-medium text-center mt-3 hidden"></p>
         </div>
       </div>
@@ -163,8 +238,8 @@ const authorName = activity.author ? `${activity.author.firstName} ${activity.au
 </Layout>
 
 <script>
-  // Importem la nova funcio del servei
-  import { enrollInActivity } from "../../services/activitiesService";
+
+  import { enrollInActivity, unenrollFromActivity } from "../../services/activitiesService";
 
   const enrollBtn = document.getElementById('enroll-btn') as HTMLButtonElement;
   const enrollMessage = document.getElementById('enroll-message') as HTMLParagraphElement;
@@ -191,6 +266,10 @@ const authorName = activity.author ? `${activity.author.firstName} ${activity.au
         enrollBtn.classList.replace('bg-gray-900', 'bg-green-600');
         enrollBtn.classList.replace('hover:bg-gray-800', 'hover:bg-green-700');
 
+        // Recarreguem per refrescar el comptador de places i mostrar el boto
+        // d'anul·lacio en lloc del d'inscripcio.
+        setTimeout(() => window.location.reload(), 1200);
+
       } catch (error: any) {
         // Fracaso
         enrollMessage.textContent = `Error: ${error.message}`;
@@ -203,6 +282,40 @@ const authorName = activity.author ? `${activity.author.firstName} ${activity.au
         if (error.message.toLowerCase().includes("autenticat")) {
           setTimeout(() => window.location.href = '/auth/login', 2000);
         }
+      }
+    });
+  }
+
+  // --- Anul·lacio de la propia inscripcio (RF-2.2) ---
+  const unenrollBtn = document.getElementById('unenroll-btn') as HTMLButtonElement;
+
+  if (unenrollBtn) {
+    unenrollBtn.addEventListener('click', async () => {
+      const activityId = unenrollBtn.getAttribute('data-activity-id');
+      if (!activityId) return;
+
+      if (!window.confirm("Segur que vols anul·lar la teva inscripció?")) return;
+
+      const originalText = unenrollBtn.innerHTML;
+      unenrollBtn.innerHTML = "Processant...";
+      unenrollBtn.disabled = true;
+      unenrollBtn.classList.add('opacity-75', 'cursor-not-allowed');
+
+      try {
+        await unenrollFromActivity(activityId);
+
+        enrollMessage.textContent = "Inscripció anul·lada correctament.";
+        enrollMessage.className = "text-sm font-medium text-center mt-3 text-green-600 block";
+
+        // Recarreguem perque torni a aparèixer el boto d'inscripcio i
+        // s'actualitzi el nombre de places lliures.
+        setTimeout(() => window.location.reload(), 1200);
+      } catch (error: any) {
+        enrollMessage.textContent = `Error: ${error.message}`;
+        enrollMessage.className = "text-sm font-medium text-center mt-3 text-red-600 block";
+        unenrollBtn.innerHTML = originalText;
+        unenrollBtn.disabled = false;
+        unenrollBtn.classList.remove('opacity-75', 'cursor-not-allowed');
       }
     });
   }

@@ -3,7 +3,7 @@ export const GET_ACTIVITY_BY_SLUG = `
     getActivityBySlug(slug: $slug) {
       id title shortDescription longDescription createdAt publishedAt status type
       activityDate registrationStartDate registrationEndDate mainImage secondaryImage slug
-      isPrivate
+      isPrivate capacity enrolledCount availableSpots isFull isEnrollmentOpen
       author { firstName lastName1 }
       section { id name }
       participants { id }
@@ -17,7 +17,7 @@ export const GET_ACTIVITY_BY_ID = `
     getActivityById(id: $id) {
       id title shortDescription longDescription createdAt publishedAt status type
       activityDate registrationStartDate registrationEndDate mainImage secondaryImage slug
-      isPrivate
+      isPrivate capacity enrolledCount availableSpots isFull isEnrollmentOpen
       section { id name }
       documents { id name url type createdAt }
     }
@@ -66,5 +66,35 @@ export const UPDATE_ACTIVITY_MUTATION = `
 export const ENROLL_MUTATION = `
   mutation EnrollInActivity($activityId: ID!) {
     enrollInActivity(activityId: $activityId)
+  }
+`;
+
+export const UNENROLL_MUTATION = `
+  mutation UnenrollFromActivity($activityId: ID!) {
+    unenrollFromActivity(activityId: $activityId)
+  }
+`;
+
+export const GET_ACTIVITY_PARTICIPANTS = `
+  query GetActivityParticipants($id: ID!) {
+    getActivityById(id: $id) {
+      id title slug type activityDate capacity
+      enrolledCount availableSpots isFull isEnrollmentOpen
+      registrationStartDate registrationEndDate
+      section { id name }
+      participants { id code firstName lastName1 lastName2 email phone }
+    }
+  }
+`;
+
+export const ADD_PARTICIPANT_MUTATION = `
+  mutation AddParticipantToActivity($activityId: ID!, $userId: ID!) {
+    addParticipantToActivity(activityId: $activityId, userId: $userId)
+  }
+`;
+
+export const REMOVE_PARTICIPANT_MUTATION = `
+  mutation RemoveParticipantFromActivity($activityId: ID!, $userId: ID!) {
+    removeParticipantFromActivity(activityId: $activityId, userId: $userId)
   }
 `;

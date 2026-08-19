@@ -33,6 +33,14 @@ type Activity {
   section: Section!
   participants: [User!]! # Llista d'usuaris inscrits
   documents: [ActivityDocument!]! # Adjunts (actes, convocatories...)
+
+  # Camps calculats al resolver a partir de `participants` i `capacity`.
+  # Permeten mostrar l'ocupacio al portal public sense haver de descarregar
+  # la llista sencera d'inscrits (dades personals de tercers).
+  enrolledCount: Int!        # Nombre d'usuaris inscrits actualment
+  availableSpots: Int        # Places lliures; null si l'activitat no te aforament
+  isFull: Boolean!           # Cert si s'ha exhaurit l'aforament
+  isEnrollmentOpen: Boolean! # Cert si avui som dins del periode d'inscripcio
 }
 
 # Fitxer ja pujat via l'endpoint REST POST /upload (vegeu memoria, 9.4.2):
@@ -100,5 +108,11 @@ extend type Query {
 extend type Mutation {
   createActivity(input: CreateActivityInput!): Activity
   updateActivity(id: ID!, input: CreateActivityInput!): Activity
-  enrollInActivity(activityId: ID!): Boolean! 
+  # RF-2.2 / CU-05: el soci s'inscriu ell mateix (l'usuari surt del token).
+  enrollInActivity(activityId: ID!): Boolean!
+  # RF-2.2: el soci anul·la la seva propia inscripcio.
+  unenrollFromActivity(activityId: ID!): Boolean!
+  # RF-3.3: l'administrador gestiona les inscripcions de qualsevol soci.
+  addParticipantToActivity(activityId: ID!, userId: ID!): Boolean!
+  removeParticipantFromActivity(activityId: ID!, userId: ID!): Boolean!
 }

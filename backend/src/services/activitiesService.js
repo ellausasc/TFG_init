@@ -223,22 +223,109 @@ const getMyActivities = async (userId) => {
   return await activitiesRepository.findAll({ participants: { some: { id: userId } } });
 };
 
-const enroll = async (activityId, userId) => {
-  if (!userId) throw new Error("No estàs autenticat. Has d'iniciar sessió per inscriure't a una activitat.");
+// ---------------------------------------------------------------------------
+// GESTIO D'INSCRIPCIONS (RF-2.2 / CU-05 i RF-3.3 / CU-11)
+// ---------------------------------------------------------------------------
 
+// Comprova si una activitat es dins del periode d'inscripcio. Les dates son
+// opcionals al model: si no n'hi ha cap, s'enten que el periode sempre es
+// obert. Es fa servir tant per validar la inscripcio com per informar-ne el
+// frontend a traves del camp calculat `isEnrollmentOpen`.
+const isEnrollmentOpen = (activity, now = new Date()) => {
+  if (activity.registrationStartDate && now < new Date(activity.registrationStartDate)) return false;
+  if (activity.registrationEndDate && now > new Date(activity.registrationEndDate)) return false;
+  return true;
+};
+
+// Comprova si s'ha exhaurit l'aforament. `capacity` es opcional: quan es null
+// l'activitat no te limit de places i mai es considera plena.
+const isFull = (activity) => {
+  if (activity.capacity === null || activity.capacity === undefined) return false;
+  return (activity.participants || []).length >= activity.capacity;
+};
+
+// Validacions comunes a totes les altes d'inscripcio (les faci el soci o un
+// administrador): l'activitat ha d'existir i l'usuari no hi pot constar ja.
+const findActivityForEnrollment = async (activityId, userId) => {
   const numericActivityId = parseInt(activityId, 10);
   const activity = await activitiesRepository.findById(numericActivityId);
   if (!activity) throw new Error("L'activitat no existeix.");
 
   const alreadyEnrolled = activity.participants.some((participant) => participant.id === userId);
+  return { numericActivityId, activity, alreadyEnrolled };
+};
+
+// Inscripcio del propi soci. A diferencia de l'alta feta per un administrador,
+// aqui si que s'apliquen les restriccions de calendari i d'aforament.
+const enroll = async (activityId, userId) => {
+  if (!userId) throw new Error("No estàs autenticat. Has d'iniciar sessió per inscriure't a una activitat.");
+
+  const { numericActivityId, activity, alreadyEnrolled } = await findActivityForEnrollment(activityId, userId);
   if (alreadyEnrolled) throw new Error("Ja estàs inscrit en aquesta activitat.");
 
+  // El periode d'inscripcio encara no s'ha obert.
+  if (activity.registrationStartDate && new Date() < new Date(activity.registrationStartDate)) {
+    throw new Error("El període d'inscripció d'aquesta activitat encara no s'ha obert.");
+  }
+
+  // El periode d'inscripcio ja s'ha tancat.
   if (activity.registrationEndDate && new Date() > new Date(activity.registrationEndDate)) {
     throw new Error("El termini d'inscripció d'aquesta activitat ja ha finalitzat.");
+  }
+
+  // Validacio d'aforament (CU-05): el camp `capacity` ja existia al model pero
+  // no s'estava comprovant enlloc, de manera que es podien superar les places.
+  if (isFull(activity)) {
+    throw new Error("Aquesta activitat ja ha exhaurit totes les places disponibles.");
   }
 
   await activitiesRepository.enroll(numericActivityId, userId);
   return true;
 };
 
-module.exports = { getAll, getBySlug, getById, getFiltered, create, update, enroll, getMyActivities };
+// Anul·lacio de la propia inscripcio per part del soci.
+const unenroll = async (activityId, userId) => {
+  if (!userId) throw new Error("No estàs autenticat.");
+
+  const { numericActivityId, alreadyEnrolled } = await findActivityForEnrollment(activityId, userId);
+  if (!alreadyEnrolled) throw new Error("No estàs inscrit en aquesta activitat.");
+
+  await activitiesRepository.unenroll(numericActivityId, userId);
+  return true;
+};
+
+// Alta d'un soci feta per un administrador (RF-3.3). Es respecta l'aforament
+// per no trencar la coherencia de les dades, pero NO les dates d'inscripcio:
+// la junta ha de poder afegir participants fora de termini (inscripcions
+// presencials, altes de darrera hora, etc.).
+const addParticipant = async (activityId, userId) => {
+  const numericUserId = parseInt(userId, 10);
+  if (Number.isNaN(numericUserId)) throw new Error("Identificador d'usuari invàlid.");
+
+  const { numericActivityId, activity, alreadyEnrolled } = await findActivityForEnrollment(activityId, numericUserId);
+  if (alreadyEnrolled) throw new Error("Aquest usuari ja consta com a inscrit en aquesta activitat.");
+  if (isFull(activity)) throw new Error("No es pot afegir el participant: l'aforament està complet.");
+
+  await activitiesRepository.enroll(numericActivityId, numericUserId);
+  return true;
+};
+
+// Baixa d'un soci feta per un administrador (RF-3.3).
+const removeParticipant = async (activityId, userId) => {
+  const numericUserId = parseInt(userId, 10);
+  if (Number.isNaN(numericUserId)) throw new Error("Identificador d'usuari invàlid.");
+
+  const { numericActivityId, alreadyEnrolled } = await findActivityForEnrollment(activityId, numericUserId);
+  if (!alreadyEnrolled) throw new Error("Aquest usuari no consta com a inscrit en aquesta activitat.");
+
+  await activitiesRepository.unenroll(numericActivityId, numericUserId);
+  return true;
+};
+
+module.exports = {
+  getAll, getBySlug, getById, getFiltered, create, update, getMyActivities,
+  enroll, unenroll, addParticipant, removeParticipant,
+  // Exportades tambe perque el resolver pugui calcular els camps
+  // `isFull` / `isEnrollmentOpen` sense duplicar-ne la logica.
+  isFull, isEnrollmentOpen
+};

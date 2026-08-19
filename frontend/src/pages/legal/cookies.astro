@@ -1,0 +1,113 @@
+---
+// src/pages/legal/cookies.astro
+// Politica de galetes (article 22.2 LSSICE). La plataforma nomes fa servir la
+// galeta tecnica `token`, establerta pel backend en iniciar sessio (vegeu
+// memoria, seccio 9.4.1), i una preferencia local per recordar que s'ha
+// tancat l'avis de galetes.
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/ui/Container.astro";
+import SectionHead from "../../components/ui/SectionHead.astro";
+
+// Inventari de galetes i emmagatzematge local utilitzats pel portal.
+const cookies = [
+  {
+    name: "token",
+    type: "Tècnica / de sessió",
+    purpose:
+      "Manté la sessió iniciada i transporta els permisos de l'usuari. És httpOnly, de manera que no és accessible des de JavaScript.",
+    duration: "7 dies o fins que es tanca la sessió",
+    owner: "Pròpia",
+  },
+  {
+    name: "associat_cookie_notice",
+    type: "Emmagatzematge local (no és una galeta)",
+    purpose:
+      "Recorda que ja has tancat l'avís de galetes per no tornar-lo a mostrar.",
+    duration: "Fins que esborris les dades del navegador",
+    owner: "Pròpia",
+  },
+];
+---
+
+<Layout
+  title="Política de cookies"
+  description="Informació sobre les galetes i l'emmagatzematge local que utilitza el portal.">
+  <Container>
+    <SectionHead align="left">
+      <Fragment slot="title">Política de galetes</Fragment>
+      <Fragment slot="desc">
+        Quines galetes utilitzem, per a què serveixen i com pots gestionar-les.
+      </Fragment>
+    </SectionHead>
+
+    <article class="prose prose-lg max-w-3xl mt-10">
+      <h2>1. Què són les galetes</h2>
+      <p>
+        Les galetes (<em>cookies</em>) són petits fitxers de text que els llocs
+        web desen al navegador per recordar informació entre pàgines o entre
+        visites.
+      </p>
+
+      <h2>2. Quines utilitzem</h2>
+      <p>
+        Aquest portal <strong>no utilitza galetes analítiques, publicitàries ni
+        de tercers</strong>. Només fem servir les estrictament necessàries per
+        al funcionament del servei, que d'acord amb l'article 22.2 de la LSSICE
+        estan exemptes del deure de consentiment previ.
+      </p>
+    </article>
+
+    <div class="max-w-3xl mt-8 pb-24">
+      <div class="overflow-x-auto border border-gray-200 rounded-lg">
+        <table class="w-full text-sm text-left text-gray-600">
+          <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
+            <tr>
+              <th class="px-6 py-3">Nom</th>
+              <th class="px-6 py-3">Tipus</th>
+              <th class="px-6 py-3">Finalitat</th>
+              <th class="px-6 py-3">Durada</th>
+              <th class="px-6 py-3">Titularitat</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 bg-white">
+            {
+              cookies.map((cookie) => (
+                <tr class="hover:bg-gray-50 align-top">
+                  <td class="px-6 py-3 font-mono text-xs text-gray-900">
+                    {cookie.name}
+                  </td>
+                  <td class="px-6 py-3">{cookie.type}</td>
+                  <td class="px-6 py-3">{cookie.purpose}</td>
+                  <td class="px-6 py-3">{cookie.duration}</td>
+                  <td class="px-6 py-3">{cookie.owner}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <article class="prose prose-lg max-w-3xl mt-10">
+        <h2>3. Com gestionar-les</h2>
+        <p>
+          Pots eliminar o bloquejar les galetes des de la configuració del teu
+          navegador. Tingues en compte, però, que si bloqueges la galeta
+          <code>token</code> no podràs mantenir la sessió iniciada ni accedir a
+          l'àrea privada.
+        </p>
+        <p>
+          També pots tancar la teva sessió en qualsevol moment des de l'opció
+          <a href="/auth/logout">Tancar sessió</a>, que elimina la galeta del
+          navegador.
+        </p>
+
+        <h2>4. Més informació</h2>
+        <p>
+          Per conèixer com tractem les dades personals, consulta la
+          <a href="/legal/privacitat">política de privacitat</a> i l'
+          <a href="/legal/avis-legal">avís legal</a>.
+        </p>
+      </article>
+    </div>
+  </Container>
+</Layout>

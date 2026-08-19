@@ -1,0 +1,132 @@
+---
+// src/pages/legal/privacitat.astro
+// Politica de privacitat conforme als articles 13 i 14 del Reglament (UE)
+// 2016/679 (RGPD) i a la Llei Organica 3/2018 (LOPDGDD), citades a la memoria
+// (seccions 2.3 i 10.2). El contingut reflecteix les dades que la plataforma
+// tracta realment segons el model de dades (taula User i relacions).
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/ui/Container.astro";
+import SectionHead from "../../components/ui/SectionHead.astro";
+---
+
+<Layout
+  title="Política de privacitat"
+  description="Informació sobre el tractament de les dades personals dels socis i visitants del portal.">
+  <Container>
+    <SectionHead align="left">
+      <Fragment slot="title">Política de privacitat</Fragment>
+      <Fragment slot="desc">
+        Com tractem les teves dades personals i quins drets hi tens.
+      </Fragment>
+    </SectionHead>
+
+    <article class="prose prose-lg max-w-3xl mt-10 pb-24">
+      <h2>1. Responsable del tractament</h2>
+      <ul>
+        <li><strong>Responsable:</strong> Associació Associa't</li>
+        <li><strong>NIF:</strong> [NIF de l'entitat]</li>
+        <li><strong>Adreça:</strong> [Adreça completa], 17003 Girona</li>
+        <li><strong>Contacte:</strong> tfg@udg.edu</li>
+      </ul>
+
+      <h2>2. Quines dades tractem</h2>
+      <p>
+        En registrar-te com a soci recollim les dades següents, totes elles
+        necessàries per acreditar la teva condició de membre de l'entitat:
+      </p>
+      <ul>
+        <li>
+          <strong>Dades identificatives:</strong> nom, cognoms, DNI i codi
+          intern de soci.
+        </li>
+        <li>
+          <strong>Dades de contacte:</strong> adreça de correu electrònic i,
+          opcionalment, telèfon.
+        </li>
+        <li><strong>Data de naixement</strong>, quan la facilites.</li>
+        <li>
+          <strong>Imatge de perfil</strong>, si decideixes pujar-ne una (dada
+          opcional).
+        </li>
+        <li>
+          <strong>Dades d'activitat:</strong> inscripcions a les activitats
+          organitzades per l'associació i data d'alta al sistema.
+        </li>
+      </ul>
+      <p>
+        La contrasenya no es desa mai en text pla: s'emmagatzema xifrada
+        mitjançant un algorisme de resum criptogràfic amb sal (bcrypt), de
+        manera que ni l'associació hi té accés.
+      </p>
+
+      <h2>3. Finalitats i base jurídica</h2>
+      <ul>
+        <li>
+          <strong>Gestió de la condició de soci</strong> (registre de membres,
+          acreditació en assemblees i votacions, gestió de quotes). Base
+          jurídica: execució de la relació associativa i compliment de les
+          obligacions legals de l'entitat.
+        </li>
+        <li>
+          <strong>Gestió de les inscripcions a activitats.</strong> Base
+          jurídica: execució de la relació associativa a petició de la persona
+          interessada.
+        </li>
+        <li>
+          <strong>Accés a l'àrea privada i a la documentació dels òrgans de
+          govern.</strong> Base jurídica: interès legítim de l'entitat en la
+          transparència interna envers la seva base social.
+        </li>
+        <li>
+          <strong>Manteniment de la sessió iniciada.</strong> Base jurídica:
+          consentiment atorgat en iniciar sessió i necessitat tècnica de
+          prestació del servei.
+        </li>
+      </ul>
+
+      <h2>4. Termini de conservació</h2>
+      <p>
+        Les dades es conserven mentre es mantingui la condició de soci. Un cop
+        causada baixa, es conserven degudament bloquejades durant els terminis
+        de prescripció de les responsabilitats legals, comptables i fiscals que
+        se'n puguin derivar, i després se suprimeixen.
+      </p>
+
+      <h2>5. Destinataris</h2>
+      <p>
+        No es cedeixen dades a tercers, tret que hi hagi una obligació legal.
+        Les dades s'allotgen a la infraestructura pròpia de l'associació i no
+        es transfereixen fora de l'Espai Econòmic Europeu.
+      </p>
+      <p>
+        Dins de la plataforma, l'accés a les dades personals està restringit
+        mitjançant un sistema de control d'accés basat en rols: només els
+        membres amb permisos explícits sobre el mòdul de gestió d'usuaris hi
+        poden accedir.
+      </p>
+
+      <h2>6. Els teus drets</h2>
+      <p>
+        Pots exercir en qualsevol moment els drets d'accés, rectificació,
+        supressió, oposició, limitació del tractament i portabilitat, escrivint
+        a <a href="mailto:tfg@udg.edu">tfg@udg.edu</a> i acreditant la teva
+        identitat. Bona part d'aquests drets els pots exercir directament des de
+        l'apartat <a href="/me">El meu perfil</a>, on pots consultar i
+        actualitzar les teves dades.
+      </p>
+      <p>
+        Si consideres que el tractament no s'ajusta a la normativa, tens dret a
+        presentar una reclamació davant l'Autoritat Catalana de Protecció de
+        Dades (APDCAT) o l'Agència Espanyola de Protecció de Dades (AEPD).
+      </p>
+
+      <h2>7. Mesures de seguretat</h2>
+      <p>
+        La plataforma aplica el principi de seguretat des del disseny: xifratge
+        de contrasenyes, control d'accés granular basat en rols i permisos,
+        transport de la sessió mitjançant galetes <code>httpOnly</code> i
+        restricció d'accés a la documentació confidencial dels òrgans de govern.
+      </p>
+    </article>
+  </Container>
+</Layout>

@@ -100,19 +100,19 @@ const allowedTypes = [
       }
 
       const input = {
-        title: formData.get("title"),
+        title: String(formData.get("title") || ""),
         shortDescription: shortDescInput?.value || "",
         longDescription: longDescInput?.value || "",
         sectionId: parseInt(formData.get("sectionId") as string),
         status: formData.get("status") === "on" ? "PUBLISHED" : "DRAFT", // GraphQL espera un String
-        type: formData.get("type"),
+        type: String(formData.get("type") || ""),
         isPrivate,
         capacity: capacityValue ? parseInt(capacityValue) : null,
         activityDate: new Date(formData.get("activityDate") as string).toISOString(),
         registrationStartDate: regStart ? new Date(regStart).toISOString() : null,
         registrationEndDate: regEnd ? new Date(regEnd).toISOString() : null,
-        mainImage: formData.get("mainImage") || null,
-        secondaryImage: formData.get("secondaryImage") || null,
+        mainImage: String(formData.get("mainImage") || "") || undefined,
+        secondaryImage: String(formData.get("secondaryImage") || "") || undefined,
         attachments,
       };
 

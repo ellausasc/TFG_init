@@ -1,0 +1,145 @@
+---
+// src/pages/about.astro
+// Pagina "Qui som?" (CU-01, RF-1.1). Fins ara el Navbar i el panell de control
+// hi enllacaven amb el path "/#", que no portava enlloc.
+import Layout from "../layouts/Layout.astro";
+import Container from "../components/ui/Container.astro";
+import SectionHead from "../components/ui/SectionHead.astro";
+import { getAllSections } from "../services/sectionsService";
+
+export const prerender = false;
+
+// Les seccions actives son, a la practica, les arees de treball de l'entitat:
+// les recuperem del backend per no haver de mantenir-ne una copia manual aqui.
+let sections: any[] = [];
+try {
+  const allSections = await getAllSections();
+  sections = allSections.filter((section: any) => section.isActive === true);
+} catch (error) {
+  console.error("Error carregant les seccions:", error);
+}
+
+// Valors de l'entitat. Es contingut estatic de presentacio: es manté aquí per
+// facilitar-ne l'edicio sense haver de tocar la maquetacio.
+const values = [
+  {
+    title: "Participació",
+    description:
+      "Qualsevol soci pot proposar i organitzar activitats. Les decisions importants es prenen en assemblea, amb la documentació sempre a l'abast.",
+  },
+  {
+    title: "Transparència",
+    description:
+      "Les actes i convocatòries dels òrgans de govern són accessibles per als socis des de l'àrea privada, sense haver-les de demanar.",
+  },
+  {
+    title: "Proximitat",
+    description:
+      "Treballem des de Girona i per al teixit associatiu del territori, amb activitats obertes al barri i a la ciutat.",
+  },
+];
+---
+
+<Layout
+  title="Qui som?"
+  description="Coneix l'associació: qui som, què fem i com pots participar-hi.">
+  <Container>
+    <SectionHead align="left">
+      <Fragment slot="title">Qui som?</Fragment>
+      <Fragment slot="desc">
+        Una entitat sense ànim de lucre feta per i per a les persones que en
+        formen part.
+      </Fragment>
+    </SectionHead>
+
+    <!-- Presentacio -->
+    <div class="prose prose-lg max-w-3xl mt-10">
+      <p>
+        <strong>Associa't</strong> és una associació sense ànim de lucre dedicada
+        a dinamitzar la vida cultural i social del seu entorn. Organitzem
+        activitats obertes, tallers i trobades, i donem suport als projectes que
+        neixen de la iniciativa dels nostres membres.
+      </p>
+      <p>
+        L'entitat s'organitza en <strong>seccions</strong>, cadascuna centrada en
+        un àmbit de treball concret i amb els seus propis responsables. La
+        <strong>junta directiva</strong> s'encarrega de la gestió del dia a dia i
+        ret comptes davant l'<strong>assemblea general</strong>, que és l'òrgan
+        sobirà format per la totalitat dels socis.
+      </p>
+      <p>
+        Aquest portal és l'eina que fem servir per centralitzar-ho tot: la
+        comunicació externa, les inscripcions a les activitats i la documentació
+        interna dels òrgans de govern.
+      </p>
+    </div>
+
+    <!-- Valors -->
+    <div class="mt-16">
+      <h2 class="text-2xl font-bold text-slate-900 mb-8">Com treballem</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {
+          values.map((value) => (
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h3 class="text-lg font-bold text-slate-900 mb-2">
+                {value.title}
+              </h3>
+              <p class="text-sm text-gray-600 leading-relaxed">
+                {value.description}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <!-- Seccions de l'entitat -->
+    <div class="mt-16">
+      <h2 class="text-2xl font-bold text-slate-900 mb-8">Les nostres seccions</h2>
+      {
+        sections.length > 0 ? (
+          <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sections.map((section: any) => (
+              <li class="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <a href={`/sections/${section.id}`} class="block p-6 group h-full">
+                  <h3 class="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                    {section.name}
+                  </h3>
+                  <p class="text-sm text-gray-600 mt-2 leading-relaxed line-clamp-3">
+                    {section.description || "Sense descripció disponible."}
+                  </p>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="text-gray-500 italic">
+            Encara no hi ha cap secció publicada.
+          </p>
+        )
+      }
+    </div>
+
+    <!-- Crida a l'accio -->
+    <div
+      class="mt-16 mb-24 bg-gray-50 border border-gray-100 rounded-2xl p-8 text-center">
+      <h2 class="text-2xl font-bold text-slate-900">Vols formar-ne part?</h2>
+      <p class="text-gray-600 mt-3 max-w-xl mx-auto">
+        Fes-te soci per inscriure't a les activitats, rebre les convocatòries i
+        participar en les decisions de l'entitat.
+      </p>
+      <div class="flex flex-wrap gap-4 justify-center mt-6">
+        <a
+          href="/auth/signup"
+          class="inline-block bg-gray-900 text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition font-medium">
+          Registrar-se
+        </a>
+        <a
+          href="/contact"
+          class="inline-block bg-white border-2 border-gray-200 px-6 py-3 rounded-xl hover:border-gray-900 hover:bg-gray-50 transition font-medium text-gray-700">
+          Contactar
+        </a>
+      </div>
+    </div>
+  </Container>
+</Layout>

@@ -4,9 +4,12 @@ import { Picture } from "astro:assets";
 export interface Props {
   activityEntry: any;
   editHref?: string;
+  // Enllac opcional a la gestio d'inscripcions (RF-3.3). Nomes es passa des
+  // del panell d'administracio.
+  participantsHref?: string;
 }
 
-const { activityEntry, editHref } = Astro.props;
+const { activityEntry, editHref, participantsHref } = Astro.props;
 
 // Adaptación: Usamos activityDate (camelCase)
 const formatDate = (dateStr: string) => {
@@ -23,14 +26,24 @@ const dateInfo = formatDate(activityEntry.activityDate);
 ---
 
 <li class="relative bg-white rounded-md shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-  {editHref && (
-    <a
-      href={editHref}
-      class="absolute top-2 right-2 z-10 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold text-gray-700 border border-gray-200 hover:bg-gray-900 hover:text-white transition-colors shadow-sm"
-    >
-      Editar
-    </a>
-  )}
+  <div class="absolute top-2 right-2 z-10 flex gap-2">
+    {participantsHref && (
+      <a
+        href={participantsHref}
+        class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold text-gray-700 border border-gray-200 hover:bg-gray-900 hover:text-white transition-colors shadow-sm"
+      >
+        Inscripcions
+      </a>
+    )}
+    {editHref && (
+      <a
+        href={editHref}
+        class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold text-gray-700 border border-gray-200 hover:bg-gray-900 hover:text-white transition-colors shadow-sm"
+      >
+        Editar
+      </a>
+    )}
+  </div>
   <a
     href={`/activities/${activityEntry.slug}`}
     class="flex flex-col sm:flex-row overflow-hidden group h-full"

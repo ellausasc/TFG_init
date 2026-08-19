@@ -1,0 +1,99 @@
+---
+// src/pages/legal/avis-legal.astro
+// Avis legal exigit per l'article 10 de la Llei 34/2002 (LSSICE), citada a la
+// memoria (seccions 2.3 i 10.2). Els camps entre claudators s'han de completar
+// amb les dades reals de l'entitat abans de posar el portal en produccio.
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/ui/Container.astro";
+import SectionHead from "../../components/ui/SectionHead.astro";
+---
+
+<Layout
+  title="Avís legal"
+  description="Dades identificatives del titular del lloc web i condicions generals d'ús del portal.">
+  <Container>
+    <SectionHead align="left">
+      <Fragment slot="title">Avís legal</Fragment>
+      <Fragment slot="desc">
+        Dades identificatives del titular i condicions generals d'ús del portal.
+      </Fragment>
+    </SectionHead>
+
+    <article class="prose prose-lg max-w-3xl mt-10 pb-24">
+      <h2>1. Dades identificatives</h2>
+      <p>
+        En compliment del deure d'informació recollit a l'article 10 de la Llei
+        34/2002, d'11 de juliol, de serveis de la societat de la informació i de
+        comerç electrònic (LSSICE), s'indiquen les dades següents:
+      </p>
+      <ul>
+        <li><strong>Titular:</strong> Associació Associa't</li>
+        <li><strong>NIF:</strong> [NIF de l'entitat]</li>
+        <li><strong>Domicili social:</strong> [Adreça completa], 17003 Girona</li>
+        <li><strong>Correu electrònic:</strong> tfg@udg.edu</li>
+        <li>
+          <strong>Registre:</strong> Inscrita al Registre d'Associacions de la
+          Generalitat de Catalunya amb el número [número d'inscripció]
+        </li>
+      </ul>
+
+      <h2>2. Objecte del portal</h2>
+      <p>
+        Aquest lloc web té per finalitat difondre les activitats i notícies de
+        l'associació i oferir als seus membres un espai privat des del qual
+        gestionar les dades personals, inscriure's a les activitats organitzades
+        i consultar la documentació dels òrgans de govern.
+      </p>
+
+      <h2>3. Condicions d'ús</h2>
+      <p>
+        L'accés al portal atribueix la condició d'usuari i implica l'acceptació
+        d'aquest avís legal. L'usuari es compromet a fer un ús diligent del lloc
+        i a no emprar-lo per dur a terme activitats contràries a la llei, a la
+        bona fe o a l'ordre públic.
+      </p>
+      <p>
+        L'usuari registrat és responsable de la custòdia de les seves
+        credencials d'accés i de tota activitat que es dugui a terme amb el seu
+        compte. Ha de comunicar immediatament a l'associació qualsevol ús no
+        autoritzat que en detecti.
+      </p>
+      <p>
+        L'associació es reserva el dret de suspendre o cancel·lar els comptes
+        que incompleixin aquestes condicions, així com de modificar els
+        continguts del portal sense avís previ.
+      </p>
+
+      <h2>4. Propietat intel·lectual i industrial</h2>
+      <p>
+        Els continguts d'aquest lloc (textos, imatges, logotips i codi font) són
+        titularitat de l'associació o de tercers que n'han autoritzat l'ús. Se'n
+        prohibeix la reproducció, distribució o transformació sense autorització
+        expressa, excepte per a ús personal i privat.
+      </p>
+
+      <h2>5. Exclusió de responsabilitat</h2>
+      <p>
+        L'associació no es fa responsable dels danys derivats d'interrupcions
+        temporals del servei, ni dels continguts de llocs web de tercers als
+        quals es pugui accedir mitjançant enllaços publicats en aquest portal.
+      </p>
+
+      <h2>6. Protecció de dades</h2>
+      <p>
+        El tractament de les dades personals recollides a través d'aquest lloc
+        es regeix per la <a href="/legal/privacitat">política de privacitat</a>,
+        i l'ús de galetes per la
+        <a href="/legal/cookies">política de galetes</a>.
+      </p>
+
+      <h2>7. Legislació aplicable</h2>
+      <p>
+        Aquestes condicions es regeixen per la legislació espanyola. Per a
+        qualsevol controvèrsia, les parts se sotmeten als jutjats i tribunals
+        del domicili social de l'associació, llevat que la normativa de consum
+        aplicable disposi una altra cosa.
+      </p>
+    </article>
+  </Container>
+</Layout>
