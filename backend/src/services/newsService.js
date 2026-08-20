@@ -46,6 +46,8 @@ const getFiltered = async ({ filter, sort, page, limit }, visibility) => {
     if (filter.title) where.title = { contains: filter.title, mode: 'insensitive' };
     if (filter.sectionId) where.sectionId = parseInt(filter.sectionId);
     if (filter.authorId) where.authorId = parseInt(filter.authorId);
+    if (filter.excludeSectionMain) where.mainPageOf = { is: null };
+    if (filter.onlyPublished) where.status = 'PUBLISHED';
   }
   where = utils.applyVisibilityFilter(where, visibility, PUBLIC_CONDITION);
 

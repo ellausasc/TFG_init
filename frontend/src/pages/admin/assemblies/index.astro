@@ -3,7 +3,6 @@
 import Layout from "../../../layouts/Layout.astro";
 import Container from "../../../components/ui/Container.astro";
 import SectionHead from "../../../components/ui/SectionHead.astro";
-import CardActivity from "../../../components/activities/ActivityCard.astro";
 import FilterActivities from "../../../components/activities/ActivityFilters.astro";
 import { getActivities } from "../../../services/activitiesService";
 
@@ -38,6 +37,18 @@ filter.types = ["ASSEMBLEA", "JUNTA"];
 // 3. Cridem el servei passant la galeta de sessio
 const { items: activities } = await getActivities({ page, limit: 10, filter }, headers);
 
+// Helpers de format per a la taula del llistat.
+const formatDate = (value?: string | null) =>
+  value ? new Date(value).toLocaleDateString("ca-ES") : null;
+
+// Ocupació: `capacity` és opcional, de manera que una activitat pot no tenir
+// aforament limitat. Els camps `enrolledCount` i `capacity` els calcula el
+// backend a partir de la relació `participants`.
+const formatOccupancy = (activity: any) => {
+  const enrolled = activity.enrolledCount ?? 0;
+  return activity.capacity ? `${enrolled} / ${activity.capacity}` : `${enrolled}`;
+};
+
 // Helper per construir URLs mantenint els filtres actuals
 const getPaginationUrl = (newPage: number) => {
   const params = new URLSearchParams(Astro.url.searchParams);
@@ -48,6 +59,14 @@ const getPaginationUrl = (newPage: number) => {
 
 <Layout title="Administrar Juntes i Assemblees">
   <Container>
+    <div class="mb-6">
+      <a
+        href="/dashboard"
+        class="text-indigo-600 hover:text-indigo-800 font-medium text-sm">
+        &larr; Tornar al panell de control
+      </a>
+    </div>
+
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
       <SectionHead align="left">
         <Fragment slot="title">Juntes i Assemblees</Fragment>
@@ -67,22 +86,78 @@ const getPaginationUrl = (newPage: number) => {
     <FilterActivities action="/admin/assemblies" />
 
     <main class="mt-10 pb-24">
-      {
-        activities.length > 0 ? (
-          <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
-            {activities.map((activityEntry: any) => (
-              <CardActivity activityEntry={activityEntry} editHref={`/admin/activities/${activityEntry.id}/edit`} />
-            ))}
-          </ul>
-        ) : (
-          <div class="text-center py-20 rounded-md">
-            <h3 class="text-xl font-medium">
+      <div class="overflow-x-auto border border-gray-200 rounded-lg">
+        <table class="w-full text-sm text-left text-gray-600">
+          <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
+            <tr>
+              <th class="px-6 py-3">Títol</th>
+              <th class="px-6 py-3">Tipus</th>
+              <th class="px-6 py-3">Secció</th>
+              <th class="px-6 py-3">Data</th>
+              <th class="px-6 py-3">Inscrits</th>
+              <th class="px-6 py-3">Estat</th>
+              <th class="px-6 py-3 text-right">Accions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 bg-white">
+            {
+              activities.map((activityEntry: any) => (
+                <tr class="hover:bg-gray-50">
+                  <td class="px-6 py-3 font-medium text-gray-900">
+                    {activityEntry.title}
+                    {activityEntry.isPrivate && (
+                      <span class="ml-2 text-xs font-semibold text-red-600 uppercase">
+                        Confidencial
+                      </span>
+                    )}
+                  </td>
+                  <td class="px-6 py-3">{activityEntry.type}</td>
+                  <td class="px-6 py-3">
+                    {activityEntry.section?.name || (
+                      <span class="text-gray-400 italic">Sense secció</span>
+                    )}
+                  </td>
+                  <td class="px-6 py-3 whitespace-nowrap">
+                    {formatDate(activityEntry.activityDate) || (
+                      <span class="text-gray-400 italic">Sense data</span>
+                    )}
+                  </td>
+                  <td class="px-6 py-3 whitespace-nowrap">
+                    {formatOccupancy(activityEntry)}
+                  </td>
+                  <td class="px-6 py-3">
+                    {activityEntry.status === "PUBLISHED" ? (
+                      <span class="text-green-600 font-medium">Publicada</span>
+                    ) : (
+                      <span class="text-amber-600 font-medium">Esborrany</span>
+                    )}
+                  </td>
+                  <td class="px-6 py-3 text-right whitespace-nowrap">
+                    <a
+                      href={`/admin/activities/${activityEntry.id}/participants`}
+                      class="text-gray-500 hover:text-gray-800 font-medium text-xs mr-4">
+                      Inscripcions
+                    </a>
+                    <a
+                      href={`/admin/activities/${activityEntry.id}/edit`}
+                      class="text-indigo-600 hover:text-indigo-800 font-medium text-xs">
+                      Editar
+                    </a>
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+
+        {
+          activities.length === 0 && (
+            <p class="text-center text-gray-500 italic py-8">
               No s'han trobat juntes ni assemblees amb aquests filtres.
-            </h3>
-            <p class="text-gray-400 mt-2">Prova a canviar els criteris de cerca.</p>
-          </div>
-        )
-      }
+            </p>
+          )
+        }
+      </div>
 
       <!-- Paginacio -->
       <div class="mt-12 flex justify-center items-center gap-6">

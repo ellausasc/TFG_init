@@ -1,73 +1,144 @@
 ---
+// src/pages/admin/sections/index.astro
+// CU-09 / RF-3.1: Gestió de seccions.
+// El llistat s'ha adaptat al mateix patró de taula que fa servir
+// l'administració d'usuaris, per unificar el llenguatge visual del panell.
 import Layout from "../../../layouts/Layout.astro";
-import SectionHead from "../../../components/ui/SectionHead.astro";
 import Container from "../../../components/ui/Container.astro";
-import CardSection from "../../../components/sections/SectionCard.astro";
+import SectionHead from "../../../components/ui/SectionHead.astro";
 import { getAllSections } from "../../../services/sectionsService";
 import { jwtDecode } from "jwt-decode";
 
 export const prerender = false;
 
-// Obtenim les seccions des del servei
-const sections = await getAllSections();
-
-// El botó "Crear nova secció" nomes s'ha de mostrar a usuaris amb permis
-// sobre el modul SECTIONS (RF-3.1). L'antiga comprovacio via
-// `localStorage.getItem("token")` no funcionava mai, ja que la sessio es
-// gestiona amb una galeta httpOnly (vegeu memoria, seccio 9.4.1) i mai no
-// es guarda cap token a localStorage.
-const token = Astro.cookies.get("token")?.value;
-let canCreateSections = false;
-if (token) {
-  try {
-    const payload: any = jwtDecode(token);
-    const userPerms: string[] = payload.userPermissions || [];
-    canCreateSections = userPerms.some((perm) => perm.split(":")[0] === "SECTIONS");
-  } catch (error) {
-    console.error("Error decodificant el token:", error);
-  }
+if (!Astro.cookies.has("token")) {
+  return Astro.redirect("/auth/login");
 }
+
+// En SSR el `fetch` del servidor no adjunta les galetes del navegador: cal
+// reenviar-la perquè el backend apliqui el filtre de visibilitat de l'usuari
+// (les seccions inactives només són visibles per a qui hi té permís).
+const token = Astro.cookies.get("token")!.value;
+const headers = { Cookie: `token=${token}` };
+
+let sections: any[] = [];
+try {
+  sections = await getAllSections(headers);
+} catch (error) {
+  console.error("Error carregant les seccions:", error);
+}
+
+// El botó "Crear nova secció" només s'ha de mostrar a usuaris amb permís
+// sobre el mòdul SECTIONS (RF-3.1).
+let canCreateSections = false;
+try {
+  const payload: any = jwtDecode(token);
+  const userPerms: string[] = payload.userPermissions || [];
+  canCreateSections = userPerms.some((perm) => perm.split(":")[0] === "SECTIONS");
+} catch (error) {
+  console.error("Error decodificant el token:", error);
+}
+
+// Format de dates coherent amb la resta del panell.
+const formatDate = (value?: string | null) =>
+  value ? new Date(value).toLocaleDateString("ca-ES") : null;
 ---
 
-<Layout title="Seccions">
+<Layout title="Administrar Seccions">
   <Container>
-    <SectionHead align="center">
-      <Fragment slot="title">Seccions</Fragment>
-      <Fragment slot="desc">
-        Explora les diferents àrees temàtiques del nostre portal.
-      </Fragment>
-    </SectionHead>
+    <!-- Retorn al panell de control -->
+    <div class="mb-6">
+      <a
+        href="/dashboard"
+        class="text-indigo-600 hover:text-indigo-800 font-medium text-sm">
+        &larr; Tornar al panell de control
+      </a>
+    </div>
 
-    {canCreateSections && (
-      <div class="mt-8 flex justify-left">
-        <a 
-          href="/admin/sections/create" 
-          class="bg-gray-800 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition flex items-center gap-2 font-medium"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-          </svg>
-          Crear nova secció
-        </a>
-      </div>
-    )}
+    <div
+      class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+      <SectionHead align="left">
+        <Fragment slot="title">Seccions</Fragment>
+        <Fragment slot="desc">
+          Consulta, crea i edita les àrees de treball del portal.
+        </Fragment>
+      </SectionHead>
 
-    <main class="mt-10 pb-24">
       {
-        sections.length > 0 ? (
-          <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
-            {sections.map((section: any) => (
-              <CardSection sectionEntry={section} />
-            ))}
-          </ul>
-        ) : (
-          <div class="text-center py-20 rounded-md border border-gray-100">
-            <h3 class="text-xl font-medium text-gray-500">
-              No s'han trobat seccions disponibles.
-            </h3>
-          </div>
+        canCreateSections && (
+          <a
+            href="/admin/sections/create"
+            class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800 transition-colors shadow-sm whitespace-nowrap">
+            Crear nova secció
+          </a>
         )
       }
+    </div>
+
+    <main class="pb-24">
+      <div class="overflow-x-auto border border-gray-200 rounded-lg">
+        <table class="w-full text-sm text-left text-gray-600">
+          <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
+            <tr>
+              <th class="px-6 py-3">Nom</th>
+              <th class="px-6 py-3">Descripció</th>
+              <th class="px-6 py-3">Publicació</th>
+              <th class="px-6 py-3">Estat</th>
+              <th class="px-6 py-3 text-right">Accions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 bg-white">
+            {
+              sections.map((section: any) => (
+                <tr class="hover:bg-gray-50 align-top">
+                  <td class="px-6 py-3 font-medium text-gray-900">
+                    {section.name}
+                  </td>
+                  <td class="px-6 py-3 max-w-md">
+                    {section.description ? (
+                      <span class="line-clamp-2">{section.description}</span>
+                    ) : (
+                      <span class="text-gray-400 italic">Sense descripció</span>
+                    )}
+                  </td>
+                  <td class="px-6 py-3 whitespace-nowrap">
+                    {formatDate(section.publishedAt) || (
+                      <span class="text-gray-400 italic">No publicada</span>
+                    )}
+                  </td>
+                  <td class="px-6 py-3">
+                    {section.isActive ? (
+                      <span class="text-green-600 font-medium">Activa</span>
+                    ) : (
+                      <span class="text-amber-600 font-medium">Inactiva</span>
+                    )}
+                  </td>
+                  <td class="px-6 py-3 text-right whitespace-nowrap">
+                    <a
+                      href={`/sections/${section.id}`}
+                      class="text-gray-500 hover:text-gray-800 font-medium text-xs mr-4">
+                      Veure
+                    </a>
+                    <a
+                      href={`/admin/sections/${section.id}/edit`}
+                      class="text-indigo-600 hover:text-indigo-800 font-medium text-xs">
+                      Editar
+                    </a>
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+
+        {
+          sections.length === 0 && (
+            <p class="text-center text-gray-500 italic py-8">
+              Encara no hi ha cap secció creada.
+            </p>
+          )
+        }
+      </div>
     </main>
   </Container>
 </Layout>

@@ -29,7 +29,7 @@ const menuitems = [
       ? sectionChildren 
       : [{ title: "Cap secció disponible", path: "#" }],
   },
-  { title: "Qui som?", path: "/#" },
+  { title: "Qui som?", path: "/about" },
   { title: "Contacte", path: "/contact" },
 ];
 
@@ -137,7 +137,6 @@ const allowedUserItems = allUserItems.filter(item =>
             ))
           }
 
-          {/* RENDERITZAT CONDICIONAL: Depèn directament del servidor! */}
           {!isLoggedIn ? (
             <div id="guest-menu">
               <Dropdown title="Àrea privada" children={guestItems} lastItem={true} />

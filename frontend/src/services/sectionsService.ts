@@ -7,8 +7,14 @@ import {
 } from "./graphql/sections.queries";
 import type { Section, CreateSectionInput, UpdateSectionInput } from "../types";
 
-export async function getAllSections(): Promise<Section[]> {
-  const data = await fetchGraphQL<{ getAllSections: Section[] }>(GET_ALL_SECTIONS_QUERY);
+export async function getAllSections(
+  headers: Record<string, string> = {},
+): Promise<Section[]> {
+  const data = await fetchGraphQL<{ getAllSections: Section[] }>(
+    GET_ALL_SECTIONS_QUERY,
+    {},
+    headers,
+  );
   return data?.getAllSections || [];
 }
 

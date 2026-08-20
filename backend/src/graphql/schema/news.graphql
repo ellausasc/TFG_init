@@ -45,6 +45,8 @@ input NewsFilterInput {
   title: String
   sectionId: Int
   authorId: Int
+  excludeSectionMain: Boolean
+  onlyPublished: Boolean
 }
 
 input NewsSortInput {
